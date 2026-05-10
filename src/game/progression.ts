@@ -3,6 +3,20 @@ import type { LevelMeta, ProgressData } from './types';
 
 const STORAGE_KEY = 'pvz-progress';
 
+/** Planting recharge time (ms) per plant type, independent of action cooldown */
+export const PLANT_RECHARGE: Record<PlantType, number> = {
+  [PlantType.sunflower]: 7500,
+  [PlantType.peashooter]: 7500,
+  [PlantType.wallnut]: 30000,
+  [PlantType.snowpea]: 7500,
+  [PlantType.cherrybomb]: 50000,
+  [PlantType.potatomine]: 30000,
+  [PlantType.repeater]: 7500,
+  [PlantType.chomper]: 7500,
+  [PlantType.tallnut]: 30000,
+  [PlantType.torchwood]: 7500,
+};
+
 export const LEVEL_META: Record<number, LevelMeta> = {
   1: {
     availablePlants: [PlantType.sunflower, PlantType.peashooter],
@@ -81,8 +95,19 @@ export function loadProgress(): ProgressData | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as ProgressData;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isValidProgressData(parsed)) return null;
+    return parsed;
   } catch {
     return null;
   }
+}
+
+function isValidProgressData(data: unknown): data is ProgressData {
+  if (typeof data !== 'object' || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.unlockedLevels !== 'number') return false;
+  if (typeof obj.completedLevels !== 'object' || obj.completedLevels === null) return false;
+  if (!Array.isArray(obj.unlockedPlants)) return false;
+  return true;
 }

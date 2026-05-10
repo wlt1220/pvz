@@ -1,6 +1,7 @@
 import { useGameStore } from '../../store/gameStore'
 import { PlantType } from '../../game/types'
 import { PLANT_CONFIGS } from '../../game/configs'
+import { PLANT_RECHARGE } from '../../game/progression'
 
 const PLANT_COLORS: Record<PlantType, string> = {
   [PlantType.sunflower]: '#fdd835',
@@ -66,7 +67,7 @@ function PlantBar() {
           const isSelected = selectedPlant === type
           const cooldown = plantCooldowns[type]
           const isOnCooldown = cooldown !== undefined && cooldown > 0
-          const cooldownRatio = isOnCooldown ? cooldown / config.cooldown : 0
+          const cooldownRatio = isOnCooldown ? cooldown / PLANT_RECHARGE[type] : 0
           const isDisabled = !canAfford || isOnCooldown
           return (
             <button

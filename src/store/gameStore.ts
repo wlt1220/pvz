@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import { GameEngine } from '../game/GameEngine'
 import { LEVELS } from '../game/levels'
-import { loadProgress, saveProgress, getUnlockedPlants } from '../game/progression'
-import { PLANT_CONFIGS } from '../game/configs'
+import { loadProgress, saveProgress, getUnlockedPlants, PLANT_RECHARGE } from '../game/progression'
 import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity, LevelCompletionData } from '../game/types'
 import { PlantType, GamePhase } from '../game/types'
 
@@ -174,11 +173,10 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
     const success = engine.plantAt(row, col, selectedPlant)
     if (success) {
       const state = engine.getState()
-      const config = PLANT_CONFIGS[selectedPlant]
-      const cooldownValue = config.cooldown > 0 ? config.cooldown : 0
+      const rechargeTime = PLANT_RECHARGE[selectedPlant]
       const newCooldowns = { ...get().plantCooldowns }
-      if (cooldownValue > 0) {
-        newCooldowns[selectedPlant] = cooldownValue
+      if (rechargeTime > 0) {
+        newCooldowns[selectedPlant] = rechargeTime
       }
       set({
         sun: state.sun,
@@ -280,8 +278,8 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       updates.plantCooldowns = newCooldowns
     }
 
-    // Unlock next level on win
-    if (state.phase === GamePhase.won) {
+    // Unlock next level on win (only execute once per win)
+    if (state.phase === GamePhase.won && !completedLevels[currentLevel]) {
       const newUnlockedLevels = currentLevel >= unlockedLevels ? currentLevel + 1 : unlockedLevels
       const newUnlockedPlants = getUnlockedPlants(newUnlockedLevels)
 
@@ -324,10 +322,6 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
     const plant = state.plants.find(p => p.row === row && p.col === col)
     if (!plant) return
 
-    // Access engine internals to remove the plant - use plantAt pattern
-    // Since GameEngine doesn't expose removePlant, we need to work through the engine
-    // We'll filter the plant out via the engine's state by modifying the store state
-    // Actually, we need to add a method to GameEngine for this
     engine.removePlant(plant.id)
     const newState = engine.getState()
     set({ plants: newState.plants })
