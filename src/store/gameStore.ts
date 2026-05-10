@@ -14,16 +14,15 @@ interface GridConfig {
 
 interface Plant {
   id: string
-  type: string
-  row: number
-  col: number
+  type: 'sunflower' | 'peashooter' | 'wallnut'
+  position: [number, number, number]
 }
 
 interface Zombie {
   id: string
   type: string
-  row: number
-  x: number
+  position: [number, number, number]
+  speed: number
 }
 
 interface GameState {

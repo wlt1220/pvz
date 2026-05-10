@@ -9,6 +9,10 @@ interface RegularZombieProps {
 
 function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
+  const leftArmRef = useRef<THREE.Mesh>(null)
+  const rightArmRef = useRef<THREE.Mesh>(null)
+  const leftLegRef = useRef<THREE.Mesh>(null)
+  const rightLegRef = useRef<THREE.Mesh>(null)
 
   useFrame((_state, delta) => {
     if (!groupRef.current) return
@@ -21,33 +25,29 @@ function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
     groupRef.current.rotation.z = Math.sin(time * 3) * 0.1
 
     // Arms bob
-    const leftArm = groupRef.current.children[3] as THREE.Mesh
-    const rightArm = groupRef.current.children[4] as THREE.Mesh
-    if (leftArm) leftArm.rotation.x = Math.sin(time * 3) * 0.15
-    if (rightArm) rightArm.rotation.x = Math.sin(time * 3 + 1) * 0.15
+    if (leftArmRef.current) leftArmRef.current.rotation.x = Math.sin(time * 3) * 0.15
+    if (rightArmRef.current) rightArmRef.current.rotation.x = Math.sin(time * 3 + 1) * 0.15
 
     // Legs alternate
-    const leftLeg = groupRef.current.children[5] as THREE.Mesh
-    const rightLeg = groupRef.current.children[6] as THREE.Mesh
-    if (leftLeg) leftLeg.rotation.x = Math.sin(time * 4) * 0.3
-    if (rightLeg) rightLeg.rotation.x = Math.sin(time * 4 + Math.PI) * 0.3
+    if (leftLegRef.current) leftLegRef.current.rotation.x = Math.sin(time * 4) * 0.3
+    if (rightLegRef.current) rightLegRef.current.rotation.x = Math.sin(time * 4 + Math.PI) * 0.3
   })
 
   return (
     <group ref={groupRef} position={position}>
-      {/* Body/torso - index 0 */}
+      {/* Body/torso */}
       <mesh position={[0, 0.4, 0]}>
         <cylinderGeometry args={[0.15, 0.15, 0.5, 8]} />
         <meshStandardMaterial color="#6B8E5A" />
       </mesh>
 
-      {/* Head - index 1 */}
+      {/* Head */}
       <mesh position={[0, 0.8, 0]}>
         <sphereGeometry args={[0.18, 12, 12]} />
         <meshStandardMaterial color="#7A9E6A" />
       </mesh>
 
-      {/* Face group - index 2 */}
+      {/* Face group */}
       <group position={[0, 0.8, 0]}>
         {/* Left eye - bigger (mismatched) */}
         <mesh position={[-0.07, 0.04, 0.15]}>
@@ -78,26 +78,26 @@ function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
         </mesh>
       </group>
 
-      {/* Left arm extended forward - index 3 */}
-      <mesh position={[-0.25, 0.5, -0.15]} rotation={[Math.PI / 4, 0, 0]}>
+      {/* Left arm extended forward */}
+      <mesh ref={leftArmRef} position={[-0.25, 0.5, -0.15]} rotation={[Math.PI / 4, 0, 0]}>
         <cylinderGeometry args={[0.04, 0.04, 0.4, 6]} />
         <meshStandardMaterial color="#6B8E5A" />
       </mesh>
 
-      {/* Right arm extended forward (slightly higher for comedy) - index 4 */}
-      <mesh position={[0.25, 0.55, -0.15]} rotation={[Math.PI / 3, 0, 0]}>
+      {/* Right arm extended forward (slightly higher for comedy) */}
+      <mesh ref={rightArmRef} position={[0.25, 0.55, -0.15]} rotation={[Math.PI / 3, 0, 0]}>
         <cylinderGeometry args={[0.04, 0.04, 0.4, 6]} />
         <meshStandardMaterial color="#6B8E5A" />
       </mesh>
 
-      {/* Left leg - index 5 */}
-      <mesh position={[-0.08, 0.1, 0]}>
+      {/* Left leg */}
+      <mesh ref={leftLegRef} position={[-0.08, 0.1, 0]}>
         <cylinderGeometry args={[0.05, 0.05, 0.3, 6]} />
         <meshStandardMaterial color="#4A6B3A" />
       </mesh>
 
-      {/* Right leg - index 6 */}
-      <mesh position={[0.08, 0.1, 0]}>
+      {/* Right leg */}
+      <mesh ref={rightLegRef} position={[0.08, 0.1, 0]}>
         <cylinderGeometry args={[0.05, 0.05, 0.3, 6]} />
         <meshStandardMaterial color="#4A6B3A" />
       </mesh>

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -11,6 +11,16 @@ function Pea({ startPosition, onRemove }: PeaProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const [removed, setRemoved] = useState(false)
   const startX = useRef(startPosition[0])
+  const hasRemovedRef = useRef(false)
+
+  useEffect(() => {
+    return () => {
+      if (!hasRemovedRef.current) {
+        hasRemovedRef.current = true
+        onRemove()
+      }
+    }
+  }, [onRemove])
 
   useFrame((_state, delta) => {
     if (!meshRef.current || removed) return
@@ -21,6 +31,7 @@ function Pea({ startPosition, onRemove }: PeaProps) {
     // Remove after traveling 10 units
     if (meshRef.current.position.x - startX.current > 10) {
       setRemoved(true)
+      hasRemovedRef.current = true
       onRemove()
     }
   })

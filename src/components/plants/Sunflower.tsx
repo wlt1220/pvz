@@ -10,13 +10,15 @@ interface SunflowerProps {
 interface OrbData {
   id: number
   startPosition: [number, number, number]
+  createdAt: number
 }
 
-let orbIdCounter = 0
+const MAX_ORB_AGE = 15
 
 function Sunflower({ position }: SunflowerProps) {
   const groupRef = useRef<THREE.Group>(null)
   const timerRef = useRef(0)
+  const idCounterRef = useRef(0)
   const [orbs, setOrbs] = useState<OrbData[]>([])
 
   const removeOrb = useCallback((id: number) => {
@@ -35,10 +37,15 @@ function Sunflower({ position }: SunflowerProps) {
     if (timerRef.current >= 5) {
       timerRef.current = 0
       const newOrb: OrbData = {
-        id: orbIdCounter++,
+        id: idCounterRef.current++,
         startPosition: [position[0], position[1] + 0.7, position[2]],
+        createdAt: time,
       }
-      setOrbs(prev => [...prev, newOrb])
+      setOrbs(prev => {
+        // Cleanup stale orbs that exceeded max age
+        const filtered = prev.filter(orb => time - orb.createdAt < MAX_ORB_AGE)
+        return [...filtered, newOrb]
+      })
     }
   })
 

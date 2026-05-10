@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -11,6 +11,16 @@ function SunOrb({ startPosition, onRemove }: SunOrbProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const [removed, setRemoved] = useState(false)
   const startY = useRef(startPosition[1])
+  const hasRemovedRef = useRef(false)
+
+  useEffect(() => {
+    return () => {
+      if (!hasRemovedRef.current) {
+        hasRemovedRef.current = true
+        onRemove()
+      }
+    }
+  }, [onRemove])
 
   useFrame((state, delta) => {
     if (!meshRef.current || removed) return
@@ -26,6 +36,7 @@ function SunOrb({ startPosition, onRemove }: SunOrbProps) {
     // Remove after floating 2 units up
     if (meshRef.current.position.y - startY.current > 2) {
       setRemoved(true)
+      hasRemovedRef.current = true
       onRemove()
     }
   })

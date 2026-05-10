@@ -10,13 +10,15 @@ interface PeashooterProps {
 interface PeaData {
   id: number
   startPosition: [number, number, number]
+  createdAt: number
 }
 
-let peaIdCounter = 0
+const MAX_PEA_AGE = 15
 
 function Peashooter({ position }: PeashooterProps) {
   const groupRef = useRef<THREE.Group>(null)
   const timerRef = useRef(0)
+  const idCounterRef = useRef(0)
   const [peas, setPeas] = useState<PeaData[]>([])
 
   const removePea = useCallback((id: number) => {
@@ -35,10 +37,15 @@ function Peashooter({ position }: PeashooterProps) {
     if (timerRef.current >= 2) {
       timerRef.current = 0
       const newPea: PeaData = {
-        id: peaIdCounter++,
+        id: idCounterRef.current++,
         startPosition: [position[0] + 0.3, position[1] + 0.4, position[2]],
+        createdAt: time,
       }
-      setPeas(prev => [...prev, newPea])
+      setPeas(prev => {
+        // Cleanup stale peas that exceeded max age
+        const filtered = prev.filter(pea => time - pea.createdAt < MAX_PEA_AGE)
+        return [...filtered, newPea]
+      })
     }
   })
 
