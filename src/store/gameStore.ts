@@ -25,13 +25,23 @@ interface Zombie {
   speed: number
 }
 
+interface ZombiePosition {
+  id: string
+  x: number
+  z: number
+}
+
 interface GameState {
   gridConfig: GridConfig
   plants: Plant[]
   zombies: Zombie[]
+  zombiePositions: ZombiePosition[]
+  registerZombie: (id: string, x: number, z: number) => void
+  unregisterZombie: (id: string) => void
+  updateZombiePosition: (id: string, x: number, z: number) => void
 }
 
-export const useGameStore = create<GameState>()(() => ({
+export const useGameStore = create<GameState>()((set) => ({
   gridConfig: {
     rows: ROWS,
     cols: COLS,
@@ -40,4 +50,19 @@ export const useGameStore = create<GameState>()(() => ({
   },
   plants: [],
   zombies: [],
+  zombiePositions: [],
+  registerZombie: (id: string, x: number, z: number) =>
+    set((state) => ({
+      zombiePositions: [...state.zombiePositions, { id, x, z }],
+    })),
+  unregisterZombie: (id: string) =>
+    set((state) => ({
+      zombiePositions: state.zombiePositions.filter((zp) => zp.id !== id),
+    })),
+  updateZombiePosition: (id: string, x: number, z: number) =>
+    set((state) => ({
+      zombiePositions: state.zombiePositions.map((zp) =>
+        zp.id === id ? { ...zp, x, z } : zp
+      ),
+    })),
 }))

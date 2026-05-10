@@ -4,7 +4,7 @@ import { gridToWorld, rowToZ } from '../utils/gridUtils'
 describe('gridToWorld', () => {
   test('center tile of a 5x9 grid maps near the origin', () => {
     const [x, y, z] = gridToWorld(2, 4)
-    expect(y).toBe(0.5)
+    expect(y).toBe(0)
     // col 4 is exactly center for 9 cols: (4 - 4.5 + 0.5) * 1.05 = 0
     expect(x).toBe(0)
     // row 2 is exactly center for 5 rows: (2 - 2.5 + 0.5) * 1.05 = 0
@@ -35,11 +35,11 @@ describe('gridToWorld', () => {
     expect(z).toBeCloseTo(2.1)
   })
 
-  test('y is always 0.5', () => {
+  test('y is always 0', () => {
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < 9; col++) {
         const [, y] = gridToWorld(row, col)
-        expect(y).toBe(0.5)
+        expect(y).toBe(0)
       }
     }
   })

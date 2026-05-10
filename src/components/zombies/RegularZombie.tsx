@@ -1,11 +1,14 @@
-import { useRef } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useGameStore } from '../../store/gameStore'
 
 interface RegularZombieProps {
   position: [number, number, number]
   speed?: number
 }
+
+let zombieIdCounter = 0
 
 function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
@@ -14,11 +17,26 @@ function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
   const leftLegRef = useRef<THREE.Mesh>(null)
   const rightLegRef = useRef<THREE.Mesh>(null)
 
+  const zombieId = useMemo(() => `regular-zombie-${zombieIdCounter++}`, [])
+  const registerZombie = useGameStore((s) => s.registerZombie)
+  const unregisterZombie = useGameStore((s) => s.unregisterZombie)
+  const updateZombiePosition = useGameStore((s) => s.updateZombiePosition)
+
+  useEffect(() => {
+    registerZombie(zombieId, position[0], position[2])
+    return () => {
+      unregisterZombie(zombieId)
+    }
+  }, [zombieId, position, registerZombie, unregisterZombie])
+
   useFrame((_state, delta) => {
     if (!groupRef.current) return
 
     // Move from right to left
     groupRef.current.position.x -= speed * delta
+
+    // Update position in store for collision detection
+    updateZombiePosition(zombieId, groupRef.current.position.x, groupRef.current.position.z)
 
     // Shambling sway animation
     const time = _state.clock.elapsedTime
