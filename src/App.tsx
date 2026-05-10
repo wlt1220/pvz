@@ -8,9 +8,12 @@ import CountdownOverlay from './components/ui/CountdownOverlay'
 import AchievementPopup from './components/ui/AchievementPopup'
 import WaveAnnouncement from './components/ui/WaveAnnouncement'
 import FPSCounter from './components/ui/FPSCounter'
+import LoadingScreen from './components/ui/LoadingScreen'
+import Tutorial from './components/ui/Tutorial'
 import { useGameLoop } from './store/useGameLoop'
 import { useGameStore } from './store/gameStore'
 import { useAudioTriggers } from './audio/useAudioTriggers'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { GamePhase } from './game/types'
 
 const LevelSelect = lazy(() => import('./components/ui/LevelSelect'))
@@ -29,9 +32,11 @@ function GameCanvas() {
 function App() {
   useGameLoop()
   useAudioTriggers()
+  useKeyboardShortcuts()
   const gamePhase = useGameStore((s) => s.gamePhase)
   const showCountdown = useGameStore((s) => s.showCountdown)
   const showAchievements = useGameStore((s) => s.showAchievements)
+  const showTutorial = useGameStore((s) => s.showTutorial)
 
   const showCanvas =
     gamePhase === GamePhase.playing ||
@@ -45,12 +50,12 @@ function App() {
 
       {gamePhase === GamePhase.menu && !showAchievements && <StartScreen />}
       {gamePhase === GamePhase.menu && showAchievements && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen />}>
           <AchievementGallery />
         </Suspense>
       )}
       {gamePhase === GamePhase.levelSelect && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen />}>
           <LevelSelect />
         </Suspense>
       )}
@@ -63,7 +68,7 @@ function App() {
       )}
 
       {gamePhase === GamePhase.paused && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen />}>
           <PauseMenu />
         </Suspense>
       )}
@@ -71,7 +76,7 @@ function App() {
       {gamePhase === GamePhase.playing && showCountdown && <CountdownOverlay />}
 
       {(gamePhase === GamePhase.won || gamePhase === GamePhase.lost) && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen />}>
           <GameOverScreen />
         </Suspense>
       )}
@@ -79,6 +84,7 @@ function App() {
       {gamePhase === GamePhase.playing && <WaveAnnouncement />}
 
       <AchievementPopup />
+      {gamePhase === GamePhase.playing && showTutorial && <Tutorial />}
       <FPSCounter />
     </div>
   )

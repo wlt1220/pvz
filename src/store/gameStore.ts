@@ -64,6 +64,9 @@ interface GameStoreState {
   // Countdown
   showCountdown: boolean
 
+  // Tutorial
+  showTutorial: boolean
+
   // Achievements
   showAchievements: boolean
   recentAchievements: AchievementId[]
@@ -88,6 +91,7 @@ interface GameStoreState {
   setGameSpeed: (speed: number) => void
   toggleShovel: () => void
   dismissCountdown: () => void
+  dismissTutorial: () => void
 }
 
 function loadInitialProgress(): { unlockedLevels: number; completedLevels: Record<number, LevelCompletionData>; unlockedPlants: PlantType[] } {
@@ -163,6 +167,9 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   // Countdown
   showCountdown: false,
 
+  // Tutorial
+  showTutorial: false,
+
   // Achievements
   showAchievements: false,
   recentAchievements: [],
@@ -226,6 +233,10 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
     const engine = new GameEngine(levelConfig)
     const state = engine.getState()
 
+    // Show tutorial for first-time players on level 1
+    const tutorialSeen = localStorage.getItem('pvz-tutorial-seen') === 'true'
+    const shouldShowTutorial = levelNum === 1 && !tutorialSeen
+
     set({
       engine,
       gamePhase: GamePhase.playing,
@@ -243,6 +254,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       plantCooldowns: {},
       shovelMode: false,
       showCountdown: true,
+      showTutorial: shouldShowTutorial,
     })
   },
 
@@ -385,5 +397,10 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
 
   dismissCountdown: () => {
     set({ showCountdown: false })
+  },
+
+  dismissTutorial: () => {
+    localStorage.setItem('pvz-tutorial-seen', 'true')
+    set({ showTutorial: false })
   },
 }))

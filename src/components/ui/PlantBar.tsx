@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useGameStore } from '../../store/gameStore'
 import { PlantType } from '../../game/types'
 import { PLANT_CONFIGS } from '../../game/configs'
@@ -29,12 +30,26 @@ const PLANT_LABELS: Record<PlantType, string> = {
   [PlantType.torchwood]: 'Tw',
 }
 
+const PLANT_DESCRIPTIONS: Record<PlantType, string> = {
+  [PlantType.sunflower]: 'Produces 25 sun every 7.5s',
+  [PlantType.peashooter]: 'Shoots peas at zombies',
+  [PlantType.wallnut]: 'Blocks zombies with high HP',
+  [PlantType.snowpea]: 'Slows zombies on hit',
+  [PlantType.cherrybomb]: 'Explodes in 3x3 area (instant)',
+  [PlantType.potatomine]: 'Arms in 15s, then explodes on contact',
+  [PlantType.repeater]: 'Fires 2 peas per shot',
+  [PlantType.chomper]: 'Eats a zombie whole (30s digest)',
+  [PlantType.tallnut]: 'Blocks vaulters, very high HP',
+  [PlantType.torchwood]: 'Turns peas into fire peas (2x dmg)',
+}
+
 function PlantBar() {
   const sun = useGameStore((s) => s.sun)
   const selectedPlant = useGameStore((s) => s.selectedPlant)
   const selectPlant = useGameStore((s) => s.selectPlant)
   const unlockedPlants = useGameStore((s) => s.unlockedPlants)
   const plantCooldowns = useGameStore((s) => s.plantCooldowns)
+  const [hoveredPlant, setHoveredPlant] = useState<PlantType | null>(null)
 
   return (
     <div
@@ -61,7 +76,7 @@ function PlantBar() {
           justifyContent: 'center',
         }}
       >
-        {unlockedPlants.map((type) => {
+        {unlockedPlants.map((type, index) => {
           const config = PLANT_CONFIGS[type]
           const canAfford = sun >= config.cost
           const isSelected = selectedPlant === type
@@ -69,31 +84,105 @@ function PlantBar() {
           const isOnCooldown = cooldown !== undefined && cooldown > 0
           const cooldownRatio = isOnCooldown ? cooldown / PLANT_RECHARGE[type] : 0
           const isDisabled = !canAfford || isOnCooldown
+          const keyLabel = index < 9 ? String(index + 1) : '0'
           return (
-            <button
+            <div
               key={type}
-              onClick={() => {
-                if (!isDisabled) selectPlant(isSelected ? null : type)
-              }}
-              disabled={isDisabled}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '4px',
-                padding: 'clamp(6px, 1vw, 10px)',
-                border: isSelected ? '3px solid #76ff03' : '2px solid rgba(255,255,255,0.3)',
-                borderRadius: '12px',
-                background: isDisabled ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.1)',
-                cursor: isDisabled ? 'not-allowed' : 'pointer',
-                opacity: isDisabled ? 0.6 : 1,
-                boxShadow: isSelected ? '0 0 12px #76ff03' : 'none',
-                minWidth: '64px',
-                minHeight: '48px',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setHoveredPlant(type)}
+              onMouseLeave={() => setHoveredPlant(null)}
             >
+              {/* Tooltip */}
+              {hoveredPlant === type && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    marginBottom: '8px',
+                    background: '#1a1a2e',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    maxWidth: '200px',
+                    fontSize: '12px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                    zIndex: 100,
+                    whiteSpace: 'normal',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '6px', textTransform: 'capitalize' }}>
+                    {type}
+                  </div>
+                  <div>Cost: {config.cost} sun</div>
+                  <div>HP: {config.hp}</div>
+                  <div>Damage: {config.damage || 'None'}</div>
+                  <div style={{ marginTop: '4px', color: '#aed581', fontStyle: 'italic' }}>
+                    {PLANT_DESCRIPTIONS[type]}
+                  </div>
+                  {/* Triangle pointer */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-6px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '6px solid transparent',
+                      borderRight: '6px solid transparent',
+                      borderTop: '6px solid #1a1a2e',
+                    }}
+                  />
+                </div>
+              )}
+              {/* Key badge */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '4px',
+                  background: 'rgba(0,0,0,0.7)',
+                  color: '#fff',
+                  fontSize: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  zIndex: 3,
+                  pointerEvents: 'none',
+                }}
+              >
+                {keyLabel}
+              </div>
+              <button
+                onClick={() => {
+                  if (!isDisabled) selectPlant(isSelected ? null : type)
+                }}
+                disabled={isDisabled}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: 'clamp(6px, 1vw, 10px)',
+                  border: isSelected ? '3px solid #76ff03' : '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '12px',
+                  background: isDisabled ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.1)',
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
+                  opacity: isDisabled ? 0.6 : 1,
+                  boxShadow: isSelected ? '0 0 12px #76ff03' : 'none',
+                  minWidth: '64px',
+                  minHeight: '48px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
               {/* Cooldown overlay */}
               {isOnCooldown && (
                 <div
@@ -155,6 +244,7 @@ function PlantBar() {
                 {config.cost}
               </span>
             </button>
+            </div>
           )
         })}
       </div>

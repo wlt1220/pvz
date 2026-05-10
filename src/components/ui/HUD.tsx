@@ -118,10 +118,12 @@ function HUD() {
             border: shovelMode ? '2px solid #fdd835' : '2px solid rgba(255,255,255,0.4)',
             fontSize: 'clamp(18px, 3vw, 24px)',
             boxShadow: shovelMode ? '0 0 12px rgba(255,152,0,0.6)' : 'none',
+            position: 'relative',
           }}
-          title="Shovel - remove a plant"
+          title="Shovel - remove a plant (S)"
         >
           🪴
+          <span style={{ position: 'absolute', bottom: '-14px', left: '50%', transform: 'translateX(-50%)', fontSize: '9px', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>(S)</span>
         </button>
 
         {/* Speed button */}
@@ -153,9 +155,11 @@ function HUD() {
             color: '#fff',
             border: '2px solid rgba(255,255,255,0.4)',
             fontSize: 'clamp(14px, 2.5vw, 18px)',
+            position: 'relative',
           }}
         >
           ⏸
+          <span style={{ position: 'absolute', bottom: '-14px', left: '50%', transform: 'translateX(-50%)', fontSize: '9px', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>(P)</span>
         </button>
       </div>
     </div>
