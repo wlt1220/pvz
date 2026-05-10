@@ -28,12 +28,12 @@ const PLANT_LABELS: Record<PlantType, string> = {
   [PlantType.torchwood]: 'Tw',
 }
 
-const ALL_PLANTS = Object.values(PlantType)
-
 function PlantBar() {
   const sun = useGameStore((s) => s.sun)
   const selectedPlant = useGameStore((s) => s.selectedPlant)
   const selectPlant = useGameStore((s) => s.selectPlant)
+  const unlockedPlants = useGameStore((s) => s.unlockedPlants)
+  const plantCooldowns = useGameStore((s) => s.plantCooldowns)
 
   return (
     <div
@@ -45,48 +45,75 @@ function PlantBar() {
         pointerEvents: 'none',
         display: 'flex',
         justifyContent: 'center',
-        padding: '12px',
+        padding: 'clamp(8px, 2vw, 16px)',
       }}
     >
       <div
         style={{
           display: 'flex',
-          gap: '8px',
-          background: 'rgba(0,0,0,0.6)',
+          flexWrap: 'wrap',
+          gap: 'clamp(6px, 1vw, 10px)',
+          background: 'rgba(0,0,0,0.7)',
           borderRadius: '16px',
-          padding: '12px 16px',
+          padding: 'clamp(8px, 1.5vw, 14px) clamp(12px, 2vw, 18px)',
           pointerEvents: 'auto',
+          justifyContent: 'center',
         }}
       >
-        {ALL_PLANTS.map((type) => {
+        {unlockedPlants.map((type) => {
           const config = PLANT_CONFIGS[type]
           const canAfford = sun >= config.cost
           const isSelected = selectedPlant === type
+          const cooldown = plantCooldowns[type]
+          const isOnCooldown = cooldown !== undefined && cooldown > 0
+          const cooldownRatio = isOnCooldown ? cooldown / config.cooldown : 0
+          const isDisabled = !canAfford || isOnCooldown
           return (
             <button
               key={type}
-              onClick={() => selectPlant(isSelected ? null : type)}
-              disabled={!canAfford}
+              onClick={() => {
+                if (!isDisabled) selectPlant(isSelected ? null : type)
+              }}
+              disabled={isDisabled}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '8px',
+                padding: 'clamp(6px, 1vw, 10px)',
                 border: isSelected ? '3px solid #76ff03' : '2px solid rgba(255,255,255,0.3)',
                 borderRadius: '12px',
-                background: canAfford ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.5)',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                opacity: canAfford ? 1 : 0.5,
+                background: isDisabled ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.1)',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.6 : 1,
                 boxShadow: isSelected ? '0 0 12px #76ff03' : 'none',
-                minWidth: '60px',
+                minWidth: '64px',
+                minHeight: '48px',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
+              {/* Cooldown overlay */}
+              {isOnCooldown && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: `${(1 - cooldownRatio) * 100}%`,
+                    background: 'rgba(0,0,0,0.6)',
+                    borderRadius: '12px',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                  }}
+                />
+              )}
               {/* Plant icon */}
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: 'clamp(36px, 5vw, 48px)',
+                  height: 'clamp(36px, 5vw, 48px)',
                   borderRadius: '50%',
                   background: PLANT_COLORS[type],
                   display: 'flex',
@@ -94,8 +121,10 @@ function PlantBar() {
                   justifyContent: 'center',
                   color: '#fff',
                   fontWeight: 'bold',
-                  fontSize: '14px',
+                  fontSize: 'clamp(12px, 2vw, 16px)',
                   textShadow: '1px 1px 1px rgba(0,0,0,0.5)',
+                  position: 'relative',
+                  zIndex: 2,
                 }}
               >
                 {PLANT_LABELS[type]}
@@ -104,8 +133,10 @@ function PlantBar() {
               <span
                 style={{
                   color: '#fff',
-                  fontSize: '10px',
+                  fontSize: 'clamp(9px, 1.5vw, 11px)',
                   whiteSpace: 'nowrap',
+                  position: 'relative',
+                  zIndex: 2,
                 }}
               >
                 {type}
@@ -113,9 +144,11 @@ function PlantBar() {
               {/* Sun cost */}
               <span
                 style={{
-                  color: '#ffeb3b',
-                  fontSize: '12px',
+                  color: canAfford ? '#ffeb3b' : '#ef5350',
+                  fontSize: 'clamp(11px, 1.8vw, 13px)',
                   fontWeight: 'bold',
+                  position: 'relative',
+                  zIndex: 2,
                 }}
               >
                 {config.cost}

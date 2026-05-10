@@ -5,11 +5,14 @@ import { GamePhase } from '../game/types'
 export function useGameLoop(): void {
   const gamePhase = useGameStore((s) => s.gamePhase)
   const tick = useGameStore((s) => s.tick)
+  const gameSpeed = useGameStore((s) => s.gameSpeed)
+  const showCountdown = useGameStore((s) => s.showCountdown)
   const rafId = useRef<number>(0)
   const prevTime = useRef<number>(0)
 
   useEffect(() => {
     if (gamePhase !== GamePhase.playing) return
+    if (showCountdown) return
 
     const loop = (time: number) => {
       if (prevTime.current === 0) {
@@ -19,7 +22,7 @@ export function useGameLoop(): void {
       prevTime.current = time
 
       if (delta > 0 && delta < 200) {
-        tick(delta)
+        tick(delta * gameSpeed)
       }
 
       rafId.current = requestAnimationFrame(loop)
@@ -31,5 +34,5 @@ export function useGameLoop(): void {
       cancelAnimationFrame(rafId.current)
       prevTime.current = 0
     }
-  }, [gamePhase, tick])
+  }, [gamePhase, tick, gameSpeed, showCountdown])
 }

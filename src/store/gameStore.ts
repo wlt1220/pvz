@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { GameEngine } from '../game/GameEngine'
 import { LEVELS } from '../game/levels'
 import { loadProgress, saveProgress, getUnlockedPlants } from '../game/progression'
+import { PLANT_CONFIGS } from '../game/configs'
 import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity, LevelCompletionData } from '../game/types'
 import { PlantType, GamePhase } from '../game/types'
 
@@ -42,6 +43,7 @@ interface GameStoreState {
   projectiles: ProjectileEntity[]
   suns: SunEntity[]
   currentWave: number
+  totalWaves: number
   currentLevel: number
   unlockedLevels: number
 
@@ -51,6 +53,13 @@ interface GameStoreState {
   gameSpeed: number
   zombiesKilledThisLevel: number
   sunCollectedThisLevel: number
+
+  // Cooldown and shovel
+  plantCooldowns: Partial<Record<PlantType, number>>
+  shovelMode: boolean
+
+  // Countdown
+  showCountdown: boolean
 
   // Engine reference (not exposed to components directly)
   engine: GameEngine | null
@@ -67,6 +76,8 @@ interface GameStoreState {
   goToLevelSelect: () => void
   removePlant: (row: number, col: number) => void
   setGameSpeed: (speed: number) => void
+  toggleShovel: () => void
+  dismissCountdown: () => void
 }
 
 function loadInitialProgress(): { unlockedLevels: number; completedLevels: Record<number, LevelCompletionData>; unlockedPlants: PlantType[] } {
@@ -122,6 +133,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   projectiles: [],
   suns: [],
   currentWave: 0,
+  totalWaves: 0,
   currentLevel: 1,
   unlockedLevels: initialProgress.unlockedLevels,
 
@@ -132,6 +144,13 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   zombiesKilledThisLevel: 0,
   sunCollectedThisLevel: 0,
 
+  // Cooldown and shovel
+  plantCooldowns: {},
+  shovelMode: false,
+
+  // Countdown
+  showCountdown: false,
+
   // Engine
   engine: null,
 
@@ -139,16 +158,33 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   selectPlant: (type: PlantType | null) => set({ selectedPlant: type }),
 
   plantSelected: (row: number, col: number) => {
-    const { engine, selectedPlant } = get()
-    if (!engine || !selectedPlant) return
+    const { engine, selectedPlant, shovelMode } = get()
+    if (!engine) return
+
+    // If shovel mode is active, remove the plant instead
+    if (shovelMode) {
+      const { removePlant, toggleShovel } = get()
+      removePlant(row, col)
+      toggleShovel()
+      return
+    }
+
+    if (!selectedPlant) return
 
     const success = engine.plantAt(row, col, selectedPlant)
     if (success) {
       const state = engine.getState()
+      const config = PLANT_CONFIGS[selectedPlant]
+      const cooldownValue = config.cooldown > 0 ? config.cooldown : 0
+      const newCooldowns = { ...get().plantCooldowns }
+      if (cooldownValue > 0) {
+        newCooldowns[selectedPlant] = cooldownValue
+      }
       set({
         sun: state.sun,
         plants: state.plants,
         selectedPlant: null,
+        plantCooldowns: newCooldowns,
       })
     }
   },
@@ -179,10 +215,14 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       projectiles: state.projectiles,
       suns: state.suns,
       currentWave: state.currentWave,
+      totalWaves: state.totalWaves,
       currentLevel: levelNum,
       zombiesKilledThisLevel: 0,
       sunCollectedThisLevel: 0,
       unlockedPlants: getUnlockedPlants(levelNum),
+      plantCooldowns: {},
+      shovelMode: false,
+      showCountdown: true,
     })
   },
 
@@ -201,11 +241,27 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   },
 
   tick: (deltaMs: number) => {
-    const { engine, currentLevel, unlockedLevels, completedLevels } = get()
+    const { engine, currentLevel, unlockedLevels, completedLevels, plantCooldowns } = get()
     if (!engine) return
 
     engine.tick(deltaMs)
     const state = engine.getState()
+
+    // Decrement plant cooldowns
+    const newCooldowns = { ...plantCooldowns }
+    let cooldownsChanged = false
+    for (const key of Object.keys(newCooldowns) as PlantType[]) {
+      const val = newCooldowns[key]
+      if (val !== undefined && val > 0) {
+        const newVal = val - deltaMs
+        if (newVal <= 0) {
+          delete newCooldowns[key]
+        } else {
+          newCooldowns[key] = newVal
+        }
+        cooldownsChanged = true
+      }
+    }
 
     const updates: Partial<GameStoreState> = {
       sun: state.sun,
@@ -214,9 +270,14 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       projectiles: state.projectiles,
       suns: state.suns,
       currentWave: state.currentWave,
+      totalWaves: state.totalWaves,
       gamePhase: state.phase,
       zombiesKilledThisLevel: state.zombiesKilled,
       sunCollectedThisLevel: state.sunCollected,
+    }
+
+    if (cooldownsChanged) {
+      updates.plantCooldowns = newCooldowns
     }
 
     // Unlock next level on win
@@ -274,5 +335,13 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
 
   setGameSpeed: (speed: number) => {
     set({ gameSpeed: speed })
+  },
+
+  toggleShovel: () => {
+    set((state) => ({ shovelMode: !state.shovelMode, selectedPlant: null }))
+  },
+
+  dismissCountdown: () => {
+    set({ showCountdown: false })
   },
 }))

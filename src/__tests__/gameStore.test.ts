@@ -15,6 +15,7 @@ describe('Game Store', () => {
       projectiles: [],
       suns: [],
       currentWave: 0,
+      totalWaves: 0,
       currentLevel: 1,
       unlockedLevels: 1,
       engine: null,
@@ -24,6 +25,9 @@ describe('Game Store', () => {
       gameSpeed: 1,
       zombiesKilledThisLevel: 0,
       sunCollectedThisLevel: 0,
+      plantCooldowns: {},
+      shovelMode: false,
+      showCountdown: false,
     })
   })
 
@@ -300,5 +304,104 @@ describe('Game Store', () => {
     expect(state.unlockedPlants).toContain(PlantType.sunflower)
     expect(state.unlockedPlants).toContain(PlantType.peashooter)
     expect(state.unlockedPlants.length).toBe(2)
+  })
+
+  test('shovelMode toggle', () => {
+    expect(useGameStore.getState().shovelMode).toBe(false)
+
+    const { toggleShovel } = useGameStore.getState()
+    toggleShovel()
+    expect(useGameStore.getState().shovelMode).toBe(true)
+
+    useGameStore.getState().toggleShovel()
+    expect(useGameStore.getState().shovelMode).toBe(false)
+  })
+
+  test('shovelMode clears selectedPlant when activated', () => {
+    const { selectPlant } = useGameStore.getState()
+    selectPlant(PlantType.peashooter)
+    expect(useGameStore.getState().selectedPlant).toBe(PlantType.peashooter)
+
+    const { toggleShovel } = useGameStore.getState()
+    toggleShovel()
+    expect(useGameStore.getState().selectedPlant).toBeNull()
+    expect(useGameStore.getState().shovelMode).toBe(true)
+  })
+
+  test('plantCooldowns start and decrement', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    // Give enough sun to plant a sunflower
+    const engine = useGameStore.getState().engine!
+    engine.setSun(200)
+    useGameStore.setState({ sun: 200 })
+
+    const { selectPlant } = useGameStore.getState()
+    selectPlant(PlantType.sunflower)
+    const { plantSelected } = useGameStore.getState()
+    plantSelected(0, 0)
+
+    // Sunflower cooldown is 7500ms
+    const cooldowns = useGameStore.getState().plantCooldowns
+    expect(cooldowns[PlantType.sunflower]).toBe(7500)
+
+    // Tick to decrement cooldown
+    const { tick } = useGameStore.getState()
+    tick(3000)
+    const cooldownAfter = useGameStore.getState().plantCooldowns[PlantType.sunflower]
+    expect(cooldownAfter).toBe(4500)
+
+    // Tick past cooldown
+    tick(5000)
+    const cooldownFinal = useGameStore.getState().plantCooldowns[PlantType.sunflower]
+    expect(cooldownFinal).toBeUndefined()
+  })
+
+  test('totalWaves is exposed from engine state', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    const state = useGameStore.getState()
+    expect(state.totalWaves).toBeGreaterThan(0)
+  })
+
+  test('gameSpeed affects tick delta', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    // Tick at normal speed
+    const { tick } = useGameStore.getState()
+    tick(100)
+    const stateNormal = useGameStore.getState()
+
+    // Start fresh and tick at 2x speed (200ms effective)
+    startLevel(1)
+    useGameStore.getState().setGameSpeed(2)
+    // The gameSpeed multiplier is applied in useGameLoop, but in tick() tests
+    // we can simulate it by passing doubled delta
+    useGameStore.getState().tick(200)
+    const stateFast = useGameStore.getState()
+
+    // At 2x (200ms tick), zombies should have moved twice as far as 1x (100ms tick)
+    // Both should have zombies spawned (level 1 spawns at delay 0)
+    expect(stateNormal.zombies.length).toBeGreaterThan(0)
+    expect(stateFast.zombies.length).toBeGreaterThan(0)
+
+    // The zombie in the fast tick should be further left (moved more)
+    const normalZombie = stateNormal.zombies[0]!
+    const fastZombie = stateFast.zombies[0]!
+    expect(fastZombie.x).toBeLessThan(normalZombie.x)
+  })
+
+  test('showCountdown is set on startLevel and cleared by dismissCountdown', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    expect(useGameStore.getState().showCountdown).toBe(true)
+
+    const { dismissCountdown } = useGameStore.getState()
+    dismissCountdown()
+    expect(useGameStore.getState().showCountdown).toBe(false)
   })
 })
