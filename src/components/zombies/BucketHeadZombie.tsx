@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface BucketHeadZombieProps {
   position: [number, number, number]
 }
 
-function BucketHeadZombie({ position }: BucketHeadZombieProps) {
+const BucketHeadZombie = memo(function BucketHeadZombie({ position }: BucketHeadZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftArmRef = useRef<THREE.Mesh>(null)
   const rightArmRef = useRef<THREE.Mesh>(null)
@@ -111,6 +111,6 @@ function BucketHeadZombie({ position }: BucketHeadZombieProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default BucketHeadZombie

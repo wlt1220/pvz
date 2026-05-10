@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface RepeaterProps {
   position: [number, number, number]
 }
 
-function Repeater({ position }: RepeaterProps) {
+const Repeater = memo(function Repeater({ position }: RepeaterProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -64,6 +64,6 @@ function Repeater({ position }: RepeaterProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default Repeater

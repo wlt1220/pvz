@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -7,7 +7,7 @@ interface NewspaperZombieProps {
   hasNewspaper?: boolean
 }
 
-function NewspaperZombie({ position, hasNewspaper = true }: NewspaperZombieProps) {
+const NewspaperZombie = memo(function NewspaperZombie({ position, hasNewspaper = true }: NewspaperZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftArmRef = useRef<THREE.Mesh>(null)
   const rightArmRef = useRef<THREE.Mesh>(null)
@@ -116,6 +116,6 @@ function NewspaperZombie({ position, hasNewspaper = true }: NewspaperZombieProps
       </mesh>
     </group>
   )
-}
+})
 
 export default NewspaperZombie

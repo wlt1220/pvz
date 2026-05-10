@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { memo, useRef, useState, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import SunOrb from './SunOrb'
@@ -15,7 +15,7 @@ interface OrbData {
 
 const MAX_ORB_AGE = 15
 
-function Sunflower({ position }: SunflowerProps) {
+const Sunflower = memo(function Sunflower({ position }: SunflowerProps) {
   const groupRef = useRef<THREE.Group>(null)
   const timerRef = useRef(0)
   const idCounterRef = useRef(0)
@@ -122,6 +122,6 @@ function Sunflower({ position }: SunflowerProps) {
       ))}
     </>
   )
-}
+})
 
 export default Sunflower

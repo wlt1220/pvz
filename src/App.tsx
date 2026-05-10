@@ -1,18 +1,22 @@
+import { lazy, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import Scene from './components/Scene'
 import HUD from './components/ui/HUD'
 import PlantBar from './components/ui/PlantBar'
 import StartScreen from './components/ui/StartScreen'
-import LevelSelect from './components/ui/LevelSelect'
-import GameOverScreen from './components/ui/GameOverScreen'
-import PauseMenu from './components/ui/PauseMenu'
 import CountdownOverlay from './components/ui/CountdownOverlay'
 import AchievementPopup from './components/ui/AchievementPopup'
-import AchievementGallery from './components/ui/AchievementGallery'
+import WaveAnnouncement from './components/ui/WaveAnnouncement'
+import FPSCounter from './components/ui/FPSCounter'
 import { useGameLoop } from './store/useGameLoop'
 import { useGameStore } from './store/gameStore'
 import { useAudioTriggers } from './audio/useAudioTriggers'
 import { GamePhase } from './game/types'
+
+const LevelSelect = lazy(() => import('./components/ui/LevelSelect'))
+const PauseMenu = lazy(() => import('./components/ui/PauseMenu'))
+const GameOverScreen = lazy(() => import('./components/ui/GameOverScreen'))
+const AchievementGallery = lazy(() => import('./components/ui/AchievementGallery'))
 
 function GameCanvas() {
   return (
@@ -40,8 +44,16 @@ function App() {
       {showCanvas && <GameCanvas />}
 
       {gamePhase === GamePhase.menu && !showAchievements && <StartScreen />}
-      {gamePhase === GamePhase.menu && showAchievements && <AchievementGallery />}
-      {gamePhase === GamePhase.levelSelect && <LevelSelect />}
+      {gamePhase === GamePhase.menu && showAchievements && (
+        <Suspense fallback={null}>
+          <AchievementGallery />
+        </Suspense>
+      )}
+      {gamePhase === GamePhase.levelSelect && (
+        <Suspense fallback={null}>
+          <LevelSelect />
+        </Suspense>
+      )}
 
       {(gamePhase === GamePhase.playing || gamePhase === GamePhase.paused) && (
         <>
@@ -50,15 +62,24 @@ function App() {
         </>
       )}
 
-      {gamePhase === GamePhase.paused && <PauseMenu />}
+      {gamePhase === GamePhase.paused && (
+        <Suspense fallback={null}>
+          <PauseMenu />
+        </Suspense>
+      )}
 
       {gamePhase === GamePhase.playing && showCountdown && <CountdownOverlay />}
 
       {(gamePhase === GamePhase.won || gamePhase === GamePhase.lost) && (
-        <GameOverScreen />
+        <Suspense fallback={null}>
+          <GameOverScreen />
+        </Suspense>
       )}
 
+      {gamePhase === GamePhase.playing && <WaveAnnouncement />}
+
       <AchievementPopup />
+      <FPSCounter />
     </div>
   )
 }

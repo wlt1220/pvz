@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface FootballZombieProps {
   position: [number, number, number]
 }
 
-function FootballZombie({ position }: FootballZombieProps) {
+const FootballZombie = memo(function FootballZombie({ position }: FootballZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftLegRef = useRef<THREE.Mesh>(null)
   const rightLegRef = useRef<THREE.Mesh>(null)
@@ -99,6 +99,6 @@ function FootballZombie({ position }: FootballZombieProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default FootballZombie

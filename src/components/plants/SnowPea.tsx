@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface SnowPeaProps {
   position: [number, number, number]
 }
 
-function SnowPea({ position }: SnowPeaProps) {
+const SnowPea = memo(function SnowPea({ position }: SnowPeaProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -64,6 +64,6 @@ function SnowPea({ position }: SnowPeaProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default SnowPea

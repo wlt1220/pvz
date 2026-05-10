@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface CherryBombProps {
   position: [number, number, number]
 }
 
-function CherryBomb({ position }: CherryBombProps) {
+const CherryBomb = memo(function CherryBomb({ position }: CherryBombProps) {
   const groupRef = useRef<THREE.Group>(null)
   const emissiveRef = useRef(0)
 
@@ -73,6 +73,6 @@ function CherryBomb({ position }: CherryBombProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default CherryBomb

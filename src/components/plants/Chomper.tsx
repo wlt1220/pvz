@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -7,7 +7,7 @@ interface ChomperProps {
   digesting?: boolean
 }
 
-function Chomper({ position, digesting = false }: ChomperProps) {
+const Chomper = memo(function Chomper({ position, digesting = false }: ChomperProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -80,6 +80,6 @@ function Chomper({ position, digesting = false }: ChomperProps) {
       )}
     </group>
   )
-}
+})
 
 export default Chomper

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { memo, useRef, useState, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import Pea from './Pea'
@@ -15,7 +15,7 @@ interface PeaData {
 
 const MAX_PEA_AGE = 15
 
-function Peashooter({ position }: PeashooterProps) {
+const Peashooter = memo(function Peashooter({ position }: PeashooterProps) {
   const groupRef = useRef<THREE.Group>(null)
   const timerRef = useRef(0)
   const idCounterRef = useRef(0)
@@ -103,6 +103,6 @@ function Peashooter({ position }: PeashooterProps) {
       ))}
     </>
   )
-}
+})
 
 export default Peashooter

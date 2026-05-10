@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface TorchwoodProps {
   position: [number, number, number]
 }
 
-function Torchwood({ position }: TorchwoodProps) {
+const Torchwood = memo(function Torchwood({ position }: TorchwoodProps) {
   const groupRef = useRef<THREE.Group>(null)
   const flame1Ref = useRef<THREE.Mesh>(null)
   const flame2Ref = useRef<THREE.Mesh>(null)
@@ -78,6 +78,6 @@ function Torchwood({ position }: TorchwoodProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default Torchwood

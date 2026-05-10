@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react'
+import { memo, useRef, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useGameStore } from '../../store/gameStore'
@@ -10,7 +10,7 @@ interface RegularZombieProps {
 
 let zombieIdCounter = 0
 
-function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
+const RegularZombie = memo(function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftArmRef = useRef<THREE.Mesh>(null)
   const rightArmRef = useRef<THREE.Mesh>(null)
@@ -131,6 +131,6 @@ function RegularZombie({ position, speed = 0.3 }: RegularZombieProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default RegularZombie

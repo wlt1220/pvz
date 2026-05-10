@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface WallNutProps {
   position: [number, number, number]
 }
 
-function WallNut({ position }: WallNutProps) {
+const WallNut = memo(function WallNut({ position }: WallNutProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -53,6 +53,6 @@ function WallNut({ position }: WallNutProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default WallNut

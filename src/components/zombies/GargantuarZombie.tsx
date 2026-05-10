@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface GargantuarZombieProps {
   position: [number, number, number]
 }
 
-function GargantuarZombie({ position }: GargantuarZombieProps) {
+const GargantuarZombie = memo(function GargantuarZombie({ position }: GargantuarZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftLegRef = useRef<THREE.Mesh>(null)
   const rightLegRef = useRef<THREE.Mesh>(null)
@@ -79,6 +79,6 @@ function GargantuarZombie({ position }: GargantuarZombieProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default GargantuarZombie

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react'
+import { memo, useRef, useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useGameStore } from '../../store/gameStore'
@@ -10,7 +10,7 @@ interface ConeHeadZombieProps {
 
 let coneZombieIdCounter = 0
 
-function ConeHeadZombie({ position, speed = 0.3 }: ConeHeadZombieProps) {
+const ConeHeadZombie = memo(function ConeHeadZombie({ position, speed = 0.3 }: ConeHeadZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const coneRef = useRef<THREE.Mesh>(null)
   const leftArmRef = useRef<THREE.Mesh>(null)
@@ -144,6 +144,6 @@ function ConeHeadZombie({ position, speed = 0.3 }: ConeHeadZombieProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default ConeHeadZombie

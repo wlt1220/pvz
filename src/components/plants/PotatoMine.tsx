@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -7,7 +7,7 @@ interface PotatoMineProps {
   armed?: boolean
 }
 
-function PotatoMine({ position, armed = false }: PotatoMineProps) {
+const PotatoMine = memo(function PotatoMine({ position, armed = false }: PotatoMineProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -85,6 +85,6 @@ function PotatoMine({ position, armed = false }: PotatoMineProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default PotatoMine

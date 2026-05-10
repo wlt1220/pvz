@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -7,7 +7,7 @@ interface PoleVaultingZombieProps {
   hasJumped?: boolean
 }
 
-function PoleVaultingZombie({ position, hasJumped = false }: PoleVaultingZombieProps) {
+const PoleVaultingZombie = memo(function PoleVaultingZombie({ position, hasJumped = false }: PoleVaultingZombieProps) {
   const groupRef = useRef<THREE.Group>(null)
   const leftLegRef = useRef<THREE.Mesh>(null)
   const rightLegRef = useRef<THREE.Mesh>(null)
@@ -85,6 +85,6 @@ function PoleVaultingZombie({ position, hasJumped = false }: PoleVaultingZombieP
       </mesh>
     </group>
   )
-}
+})
 
 export default PoleVaultingZombie

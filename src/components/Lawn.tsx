@@ -1,13 +1,12 @@
-import { useState, useCallback } from 'react'
-import { RoundedBox } from '@react-three/drei'
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { ROWS, COLS, CELL_SIZE, GAP, useGameStore } from '../store/gameStore'
 import type { PlantType } from '../game/types'
 import * as THREE from 'three'
 
-const LIGHT_GREEN = '#4a7c10'
-const DARK_GREEN = '#3d6b0c'
-const HOVER_LIGHT_GREEN = '#5a9c14'
-const HOVER_DARK_GREEN = '#4d8b10'
+const LIGHT_GREEN = new THREE.Color('#4a7c10')
+const DARK_GREEN = new THREE.Color('#3d6b0c')
+const HOVER_LIGHT_GREEN = new THREE.Color('#5a9c14')
+const HOVER_DARK_GREEN = new THREE.Color('#4d8b10')
 
 const PLANT_PREVIEW_COLORS: Record<PlantType, string> = {
   sunflower: '#fdd835',
@@ -29,6 +28,12 @@ function seededRandom(row: number, col: number): number {
   return x - Math.floor(x)
 }
 
+function instanceIdToRowCol(instanceId: number): [number, number] {
+  const row = Math.floor(instanceId / COLS)
+  const col = instanceId % COLS
+  return [row, col]
+}
+
 function getTilePosition(row: number, col: number): [number, number, number] {
   const totalWidth = COLS * CELL_SIZE + (COLS - 1) * GAP
   const totalDepth = ROWS * CELL_SIZE + (ROWS - 1) * GAP
@@ -44,55 +49,121 @@ function getTilePosition(row: number, col: number): [number, number, number] {
   return [x, y, z]
 }
 
-function Tile({ row, col }: { row: number; col: number }) {
+const totalCount = ROWS * COLS
+const dummy = new THREE.Object3D()
+
+function Lawn() {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
   const selectedPlant = useGameStore((s) => s.selectedPlant)
   const plantSelected = useGameStore((s) => s.plantSelected)
-  const [hovered, setHovered] = useState(false)
+  const [hoveredInstance, setHoveredInstance] = useState<number | null>(null)
 
-  const isLight = (row + col) % 2 === 0
-  const baseColor = isLight ? LIGHT_GREEN : DARK_GREEN
-  const hoverColor = isLight ? HOVER_LIGHT_GREEN : HOVER_DARK_GREEN
-  const color = hovered && selectedPlant ? hoverColor : baseColor
-
-  const heightVariation = 0.02 + seededRandom(row, col) * 0.03
-  const tileHeight = 0.2 + heightVariation
-
-  const [x, y, z] = getTilePosition(row, col)
-
-  const handleClick = useCallback(() => {
-    if (selectedPlant) {
-      plantSelected(row, col)
+  // Precompute tile heights for each instance
+  const tileHeights = useMemo(() => {
+    const heights: number[] = []
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        heights.push(0.2 + 0.02 + seededRandom(row, col) * 0.03)
+      }
     }
-  }, [selectedPlant, plantSelected, row, col])
+    return heights
+  }, [])
 
-  const handlePointerOver = useCallback(() => {
-    setHovered(true)
+  // Set up instance matrices and colors
+  useEffect(() => {
+    if (!meshRef.current) return
+
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const idx = row * COLS + col
+        const [x, y, z] = getTilePosition(row, col)
+        const tileHeight = tileHeights[idx] as number
+
+        dummy.position.set(x, y, z)
+        dummy.scale.set(CELL_SIZE, tileHeight, CELL_SIZE)
+        dummy.updateMatrix()
+        meshRef.current.setMatrixAt(idx, dummy.matrix)
+
+        const isLight = (row + col) % 2 === 0
+        const color = isLight ? LIGHT_GREEN : DARK_GREEN
+        meshRef.current.setColorAt(idx, color)
+      }
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true
+    if (meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true
+    }
+  }, [tileHeights])
+
+  // Update hovered instance color
+  useEffect(() => {
+    if (!meshRef.current) return
+
+    // Reset all colors
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const idx = row * COLS + col
+        const isLight = (row + col) % 2 === 0
+
+        if (idx === hoveredInstance && selectedPlant) {
+          meshRef.current.setColorAt(idx, isLight ? HOVER_LIGHT_GREEN : HOVER_DARK_GREEN)
+        } else {
+          meshRef.current.setColorAt(idx, isLight ? LIGHT_GREEN : DARK_GREEN)
+        }
+      }
+    }
+
+    if (meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true
+    }
+  }, [hoveredInstance, selectedPlant])
+
+  const handleClick = useCallback((e: { instanceId?: number; stopPropagation?: () => void }) => {
+    if (e.instanceId === undefined || !selectedPlant) return
+    if (e.stopPropagation) e.stopPropagation()
+    const [row, col] = instanceIdToRowCol(e.instanceId)
+    plantSelected(row, col)
+  }, [selectedPlant, plantSelected])
+
+  const handlePointerOver = useCallback((e: { instanceId?: number; stopPropagation?: () => void }) => {
+    if (e.instanceId === undefined) return
+    if (e.stopPropagation) e.stopPropagation()
+    setHoveredInstance(e.instanceId)
     document.body.style.cursor = selectedPlant ? 'pointer' : 'default'
   }, [selectedPlant])
 
   const handlePointerOut = useCallback(() => {
-    setHovered(false)
+    setHoveredInstance(null)
     document.body.style.cursor = 'default'
   }, [])
 
+  // Ghost preview position
+  const previewPosition = useMemo(() => {
+    if (hoveredInstance === null || !selectedPlant) return null
+    const [row, col] = instanceIdToRowCol(hoveredInstance)
+    const tileHeight = tileHeights[hoveredInstance] ?? 0.22
+    const [x, , z] = getTilePosition(row, col)
+    return [x, tileHeight + 0.3, z] as [number, number, number]
+  }, [hoveredInstance, selectedPlant, tileHeights])
+
   return (
     <group>
-      <RoundedBox
-        args={[CELL_SIZE, tileHeight, CELL_SIZE]}
-        radius={0.05}
-        smoothness={4}
-        position={[x, y, z]}
+      <instancedMesh
+        ref={meshRef}
+        args={[undefined, undefined, totalCount]}
         receiveShadow
         onClick={handleClick}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       >
-        <meshStandardMaterial color={color} />
-      </RoundedBox>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial />
+      </instancedMesh>
 
       {/* Ghost preview */}
-      {hovered && selectedPlant && (
-        <mesh position={[x, tileHeight + 0.3, z]}>
+      {previewPosition && selectedPlant && (
+        <mesh position={previewPosition}>
           <sphereGeometry args={[0.25, 16, 16]} />
           <meshStandardMaterial
             color={PLANT_PREVIEW_COLORS[selectedPlant]}
@@ -104,18 +175,6 @@ function Tile({ row, col }: { row: number; col: number }) {
       )}
     </group>
   )
-}
-
-function Lawn() {
-  const tiles: JSX.Element[] = []
-
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      tiles.push(<Tile key={`${row}-${col}`} row={row} col={col} />)
-    }
-  }
-
-  return <group>{tiles}</group>
 }
 
 export default Lawn

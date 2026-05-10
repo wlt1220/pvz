@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -6,7 +6,7 @@ interface TallNutProps {
   position: [number, number, number]
 }
 
-function TallNut({ position }: TallNutProps) {
+const TallNut = memo(function TallNut({ position }: TallNutProps) {
   const groupRef = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -57,6 +57,6 @@ function TallNut({ position }: TallNutProps) {
       </mesh>
     </group>
   )
-}
+})
 
 export default TallNut
