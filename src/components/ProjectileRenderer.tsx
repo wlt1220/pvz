@@ -1,13 +1,13 @@
 import type { ProjectileEntity } from '../game/types'
 import { ProjectileType } from '../game/types'
-import { rowToZ } from '../utils/gridUtils'
+import { colToWorldX, rowToZ } from '../utils/gridUtils'
 
 interface ProjectileRendererProps {
   projectile: ProjectileEntity
 }
 
 function ProjectileRenderer({ projectile }: ProjectileRendererProps) {
-  const position: [number, number, number] = [projectile.x, 0.4, rowToZ(projectile.row)]
+  const position: [number, number, number] = [colToWorldX(projectile.x), 0.4, rowToZ(projectile.row)]
 
   switch (projectile.type) {
     case ProjectileType.pea:

@@ -2,7 +2,6 @@ import { Canvas } from '@react-three/fiber'
 import Scene from './components/Scene'
 import HUD from './components/ui/HUD'
 import PlantBar from './components/ui/PlantBar'
-import SunCollector from './components/ui/SunCollector'
 import StartScreen from './components/ui/StartScreen'
 import LevelSelect from './components/ui/LevelSelect'
 import GameOverScreen from './components/ui/GameOverScreen'
@@ -72,7 +71,6 @@ function GameCanvas() {
   return (
     <Canvas shadows camera={{ position: [0, 10, 10], fov: 50 }}>
       <Scene />
-      <SunCollector />
     </Canvas>
   )
 }

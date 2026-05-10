@@ -7,6 +7,11 @@ export function gridToWorld(row: number, col: number): [number, number, number] 
   return [x, 0, z]
 }
 
+/** Convert a continuous column-space x coordinate to world x position */
+export function colToWorldX(col: number): number {
+  return (col - COLS / 2 + 0.5) * (CELL_SIZE + GAP)
+}
+
 /** Convert row index to world z position */
 export function rowToZ(row: number): number {
   return (row - ROWS / 2 + 0.5) * (CELL_SIZE + GAP)

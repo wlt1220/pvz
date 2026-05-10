@@ -54,6 +54,7 @@ export class GameEngine {
     this._updateProjectiles(deltaMs);
     this._checkCollisions();
     this._checkWinLose();
+    this._cleanupCollectedSuns();
   }
 
   plantAt(row: number, col: number, plantType: PlantType): boolean {
@@ -100,6 +101,7 @@ export class GameEngine {
     const sun = this.suns.find(s => s.id === sunId);
     if (sun && !sun.collected) {
       sun.collected = true;
+      sun.collectedAt = this.elapsedMs;
       this.sun += sun.value;
     }
   }
@@ -249,14 +251,17 @@ export class GameEngine {
         effects.push('slow');
       }
 
+      const spawnX = plant.col + 0.5 + i * 0.3;
+
       this.projectiles.push({
         id: `proj-${this.nextProjectileId++}`,
         type: projectileType,
-        x: plant.col + 0.5 + i * 0.3,
+        x: spawnX,
         row: plant.row,
         damage: config.damage,
         speed: PROJECTILE_SPEED,
         effects,
+        spawnX,
       });
     }
   }
@@ -406,12 +411,13 @@ export class GameEngine {
     for (const proj of this.projectiles) {
       if (projectilesToRemove.has(proj.id)) continue;
 
-      // Check torchwood passthrough (swept check: pea passed through torchwood col)
+      // Check torchwood passthrough (only convert if pea was spawned behind the torchwood)
       if (proj.type !== ProjectileType.firepea) {
         const torchwood = this.plants.find(
           p => p.type === PlantType.torchwood &&
             p.row === proj.row &&
-            proj.x >= p.col
+            proj.x >= p.col &&
+            proj.spawnX <= p.col
         );
         if (torchwood) {
           proj.type = ProjectileType.firepea;
@@ -467,10 +473,10 @@ export class GameEngine {
     this.plants = this.plants.filter(p => p.id !== plant.id);
   }
 
-  private _potatoMineExplode(plant: PlantEntity, triggerZombie: ZombieEntity): void {
+  private _potatoMineExplode(plant: PlantEntity, _triggerZombie: ZombieEntity): void {
     const config = PLANT_CONFIGS[PlantType.potatomine];
 
-    // Damage all zombies in same row within range
+    // Damage all zombies in same row within range (includes the trigger zombie)
     for (const zombie of this.zombies) {
       if (zombie.state === 'dying') continue;
       if (zombie.row === plant.row && Math.abs(zombie.x - plant.col) < 1.5) {
@@ -478,14 +484,6 @@ export class GameEngine {
         if (zombie.hp <= 0) {
           zombie.state = 'dying';
         }
-      }
-    }
-
-    // Also mark the trigger zombie if not already handled
-    if (triggerZombie.hp > 0) {
-      triggerZombie.hp -= config.damage;
-      if (triggerZombie.hp <= 0) {
-        triggerZombie.state = 'dying';
       }
     }
 
@@ -516,6 +514,13 @@ export class GameEngine {
       specialState: {},
     };
     this.zombies.push(zombie);
+  }
+
+  private _cleanupCollectedSuns(): void {
+    const SUN_CLEANUP_DELAY = 2000; // remove collected suns after 2 seconds
+    this.suns = this.suns.filter(
+      s => !s.collected || (s.collectedAt !== undefined && this.elapsedMs - s.collectedAt < SUN_CLEANUP_DELAY)
+    );
   }
 
   private _checkWinLose(): void {

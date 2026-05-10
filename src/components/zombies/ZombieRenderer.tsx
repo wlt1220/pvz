@@ -1,6 +1,6 @@
 import type { ZombieEntity } from '../../game/types'
 import { ZombieType } from '../../game/types'
-import { rowToZ } from '../../utils/gridUtils'
+import { colToWorldX, rowToZ } from '../../utils/gridUtils'
 import RegularZombie from './RegularZombie'
 import ConeHeadZombie from './ConeHeadZombie'
 import BucketHeadZombie from './BucketHeadZombie'
@@ -17,7 +17,7 @@ interface ZombieRendererProps {
 function ZombieRenderer({ zombie }: ZombieRendererProps) {
   if (zombie.state === 'dying') return null
 
-  const position: [number, number, number] = [zombie.x, 0, rowToZ(zombie.row)]
+  const position: [number, number, number] = [colToWorldX(zombie.x), 0, rowToZ(zombie.row)]
 
   switch (zombie.type) {
     case ZombieType.regular:
@@ -31,7 +31,7 @@ function ZombieRenderer({ zombie }: ZombieRendererProps) {
     case ZombieType.polevaulting:
       return <PoleVaultingZombie position={position} hasJumped={!!zombie.specialState['hasJumped']} />
     case ZombieType.newspaper:
-      return <NewspaperZombie position={position} hasNewspaper={!!zombie.specialState['hasNewspaper']} />
+      return <NewspaperZombie position={position} hasNewspaper={!zombie.specialState['enraged']} />
     case ZombieType.football:
       return <FootballZombie position={position} />
     case ZombieType.gargantuar:

@@ -163,12 +163,13 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   },
 
   tick: (deltaMs: number) => {
-    const { engine } = get()
+    const { engine, currentLevel, unlockedLevels } = get()
     if (!engine) return
 
     engine.tick(deltaMs)
     const state = engine.getState()
-    set({
+
+    const updates: Partial<GameStoreState> = {
       sun: state.sun,
       plants: state.plants,
       zombies: state.zombies,
@@ -176,7 +177,14 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       suns: state.suns,
       currentWave: state.currentWave,
       gamePhase: state.phase,
-    })
+    }
+
+    // Unlock next level on win
+    if (state.phase === GamePhase.won && currentLevel >= unlockedLevels) {
+      updates.unlockedLevels = currentLevel + 1
+    }
+
+    set(updates)
   },
 
   goToMenu: () => set({ engine: null, gamePhase: GamePhase.menu }),

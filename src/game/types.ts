@@ -98,6 +98,7 @@ export interface ProjectileEntity {
   damage: number;
   speed: number; // cells per second
   effects: string[]; // e.g., ['slow', 'fire']
+  spawnX: number; // column-space x where the projectile was created
 }
 
 export type SunSource = 'sky' | 'sunflower';
@@ -109,6 +110,7 @@ export interface SunEntity {
   value: number;
   source: SunSource;
   collected: boolean;
+  collectedAt?: number; // elapsed ms when collected
 }
 
 // ---- Wave/Level Config ----
