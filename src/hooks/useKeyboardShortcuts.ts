@@ -7,7 +7,10 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = useGameStore.getState()
-      const { gamePhase } = state
+      const { gamePhase, showTutorial } = state
+
+      // Don't fire shortcuts while tutorial is displayed
+      if (showTutorial) return
 
       // Only active during playing or paused
       if (gamePhase !== GamePhase.playing && gamePhase !== GamePhase.paused) return

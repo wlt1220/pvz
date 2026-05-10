@@ -36,6 +36,9 @@ class BackgroundMusic {
       clearInterval(this.intervalId)
       this.intervalId = null
     }
+    if (this.gainNode) {
+      this.gainNode.disconnect()
+    }
     this.gainNode = null
   }
 

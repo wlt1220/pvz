@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 
+const FPS_UPDATE_INTERVAL = 500 // Update display every 500ms instead of every frame
+
 function FPSCounter() {
   const [visible, setVisible] = useState(false)
   const [fps, setFps] = useState(0)
   const frameTimes = useRef<number[]>([])
   const animFrameRef = useRef<number | null>(null)
   const lastTimeRef = useRef<number>(performance.now())
+  const lastUpdateRef = useRef<number>(performance.now())
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,15 +41,20 @@ function FPSCounter() {
         frameTimes.current.shift()
       }
 
-      if (frameTimes.current.length > 0) {
-        const avg = frameTimes.current.reduce((a, b) => a + b, 0) / frameTimes.current.length
-        setFps(Math.round(1000 / avg))
+      // Only update React state at throttled interval
+      if (now - lastUpdateRef.current >= FPS_UPDATE_INTERVAL) {
+        lastUpdateRef.current = now
+        if (frameTimes.current.length > 0) {
+          const avg = frameTimes.current.reduce((a, b) => a + b, 0) / frameTimes.current.length
+          setFps(Math.round(1000 / avg))
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(loop)
     }
 
     lastTimeRef.current = performance.now()
+    lastUpdateRef.current = performance.now()
     frameTimes.current = []
     animFrameRef.current = requestAnimationFrame(loop)
 

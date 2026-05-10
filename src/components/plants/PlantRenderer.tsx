@@ -16,6 +16,9 @@ import TallNut from './TallNut'
 import Torchwood from './Torchwood'
 import * as THREE from 'three'
 
+const DAMAGE_FLASH_COLOR = new THREE.Color('#ff0000')
+const DEFAULT_EMISSIVE_COLOR = new THREE.Color('#000000')
+
 const PLACEMENT_DURATION = 0.4 // 400ms
 
 interface PlantRendererProps {
@@ -69,7 +72,7 @@ function PlantRenderer({ plant }: PlantRendererProps) {
       if (flashElapsed < 150) {
         groupRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive = new THREE.Color('#ff0000')
+            child.material.emissive = DAMAGE_FLASH_COLOR
             child.material.emissiveIntensity = 0.5
           }
         })
@@ -77,7 +80,7 @@ function PlantRenderer({ plant }: PlantRendererProps) {
         flashTimeRef.current = null
         groupRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive = new THREE.Color('#000000')
+            child.material.emissive = DEFAULT_EMISSIVE_COLOR
             child.material.emissiveIntensity = 0
           }
         })

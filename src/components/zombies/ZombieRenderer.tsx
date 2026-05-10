@@ -13,6 +13,9 @@ import FootballZombie from './FootballZombie'
 import GargantuarZombie from './GargantuarZombie'
 import * as THREE from 'three'
 
+const DAMAGE_FLASH_COLOR = new THREE.Color('#ff0000')
+const DEFAULT_EMISSIVE_COLOR = new THREE.Color('#000000')
+
 const DEATH_DURATION = 0.5 // 500ms
 
 interface DyingZombieProps {
@@ -81,7 +84,7 @@ function ZombieRenderer({ zombie }: ZombieRendererProps) {
       if (elapsed < 150) {
         damageFlashRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive = new THREE.Color('#ff0000')
+            child.material.emissive = DAMAGE_FLASH_COLOR
             child.material.emissiveIntensity = 0.5
           }
         })
@@ -89,7 +92,7 @@ function ZombieRenderer({ zombie }: ZombieRendererProps) {
         flashTimeRef.current = null
         damageFlashRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.emissive = new THREE.Color('#000000')
+            child.material.emissive = DEFAULT_EMISSIVE_COLOR
             child.material.emissiveIntensity = 0
           }
         })

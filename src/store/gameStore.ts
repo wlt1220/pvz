@@ -312,6 +312,29 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       updates.plantCooldowns = newCooldowns
     }
 
+    // Mid-level achievement checks (fire during active play)
+    if (state.phase === GamePhase.playing) {
+      const prevKills = get().zombiesKilledThisLevel
+      if (state.zombiesKilled > prevKills) {
+        achievementTracker.incrementKills(state.zombiesKilled - prevKills)
+      }
+      const midLevelContext: AchievementContext = {
+        zombiesKilledThisLevel: state.zombiesKilled,
+        sunCollectedThisLevel: state.sunCollected,
+        plantsLostThisLevel: state.plantsLost,
+        elapsedMs: state.elapsedMs,
+        stars: 0,
+        currentLevel,
+        completedLevels,
+        maxCherryBombKills: state.maxCherryBombKills,
+      }
+      const midLevelAchievements = achievementTracker.checkMidLevel(midLevelContext)
+      if (midLevelAchievements.length > 0) {
+        updates.recentAchievements = [...get().recentAchievements, ...midLevelAchievements]
+        updates.achievementStats = achievementTracker.getStats()
+      }
+    }
+
     // Unlock next level on win (only execute once per win)
     if (state.phase === GamePhase.won && !completedLevels[currentLevel]) {
       const newUnlockedLevels = currentLevel >= unlockedLevels ? currentLevel + 1 : unlockedLevels
@@ -341,7 +364,6 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       })
 
       // Achievement tracking
-      achievementTracker.incrementKills(state.zombiesKilled)
       const achievementContext: AchievementContext = {
         zombiesKilledThisLevel: state.zombiesKilled,
         sunCollectedThisLevel: state.sunCollected,

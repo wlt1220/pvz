@@ -15,6 +15,7 @@ export function useAudioTriggers(): void {
   const prevWave = useRef<number>(0)
   const prevPhase = useRef<GamePhase>(GamePhase.menu)
   const musicStarted = useRef(false)
+  const prevDyingIds = useRef<Set<string>>(new Set())
 
   const zombies = useGameStore((s) => s.zombies)
   const projectiles = useGameStore((s) => s.projectiles)
@@ -34,13 +35,23 @@ export function useAudioTriggers(): void {
     }
   }, [])
 
-  // Track zombie deaths (zombie count decreasing)
+  // Track zombie deaths (zombie transitioning to 'dying' state)
   useEffect(() => {
-    const currentCount = zombies.length
-    if (prevZombieCount.current > currentCount && prevZombieCount.current > 0) {
-      audioManager.play('zombieDeath')
+    const currentDyingIds = new Set<string>()
+    for (const z of zombies) {
+      if (z.state === 'dying') {
+        currentDyingIds.add(z.id)
+      }
     }
-    prevZombieCount.current = currentCount
+    // Play sound for each newly dying zombie
+    for (const id of currentDyingIds) {
+      if (!prevDyingIds.current.has(id)) {
+        audioManager.play('zombieDeath')
+        break // Play only once per tick even if multiple die
+      }
+    }
+    prevDyingIds.current = currentDyingIds
+    prevZombieCount.current = zombies.length
   }, [zombies])
 
   // Track projectile creation (projectile count increasing)
