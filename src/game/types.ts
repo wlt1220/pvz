@@ -142,4 +142,27 @@ export interface GameState {
   currentWave: number;
   totalWaves: number;
   elapsedMs: number;
+  zombiesKilled: number;
+  plantsLost: number;
+  sunCollected: number;
+}
+
+// ---- Level Meta / Progression ----
+
+export interface LevelMeta {
+  availablePlants: PlantType[];
+  introText: string;
+  zombieTypes: ZombieType[];
+}
+
+export interface LevelCompletionData {
+  stars: number;
+  zombiesKilled: number;
+  sunCollected: number;
+}
+
+export interface ProgressData {
+  unlockedLevels: number;
+  completedLevels: Record<number, LevelCompletionData>;
+  unlockedPlants: PlantType[];
 }

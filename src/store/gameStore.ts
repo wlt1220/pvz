@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { GameEngine } from '../game/GameEngine'
 import { LEVELS } from '../game/levels'
-import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity } from '../game/types'
+import { loadProgress, saveProgress, getUnlockedPlants } from '../game/progression'
+import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity, LevelCompletionData } from '../game/types'
 import { PlantType, GamePhase } from '../game/types'
 
 export const ROWS = 5
@@ -44,6 +45,13 @@ interface GameStoreState {
   currentLevel: number
   unlockedLevels: number
 
+  // New progression state
+  completedLevels: Record<number, LevelCompletionData>
+  unlockedPlants: PlantType[]
+  gameSpeed: number
+  zombiesKilledThisLevel: number
+  sunCollectedThisLevel: number
+
   // Engine reference (not exposed to components directly)
   engine: GameEngine | null
 
@@ -57,7 +65,27 @@ interface GameStoreState {
   tick: (deltaMs: number) => void
   goToMenu: () => void
   goToLevelSelect: () => void
+  removePlant: (row: number, col: number) => void
+  setGameSpeed: (speed: number) => void
 }
+
+function loadInitialProgress(): { unlockedLevels: number; completedLevels: Record<number, LevelCompletionData>; unlockedPlants: PlantType[] } {
+  const saved = loadProgress()
+  if (saved) {
+    return {
+      unlockedLevels: saved.unlockedLevels,
+      completedLevels: saved.completedLevels,
+      unlockedPlants: saved.unlockedPlants,
+    }
+  }
+  return {
+    unlockedLevels: 1,
+    completedLevels: {},
+    unlockedPlants: getUnlockedPlants(1),
+  }
+}
+
+const initialProgress = loadInitialProgress()
 
 export const useGameStore = create<GameStoreState>()((set, get) => ({
   // Grid config
@@ -95,7 +123,14 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   suns: [],
   currentWave: 0,
   currentLevel: 1,
-  unlockedLevels: 1,
+  unlockedLevels: initialProgress.unlockedLevels,
+
+  // New progression state
+  completedLevels: initialProgress.completedLevels,
+  unlockedPlants: initialProgress.unlockedPlants,
+  gameSpeed: 1,
+  zombiesKilledThisLevel: 0,
+  sunCollectedThisLevel: 0,
 
   // Engine
   engine: null,
@@ -124,7 +159,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
 
     engine.collectSun(sunId)
     const state = engine.getState()
-    set({ sun: state.sun, suns: state.suns })
+    set({ sun: state.sun, suns: state.suns, sunCollectedThisLevel: state.sunCollected })
   },
 
   startLevel: (levelNum: number) => {
@@ -145,6 +180,9 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       suns: state.suns,
       currentWave: state.currentWave,
       currentLevel: levelNum,
+      zombiesKilledThisLevel: 0,
+      sunCollectedThisLevel: 0,
+      unlockedPlants: getUnlockedPlants(levelNum),
     })
   },
 
@@ -163,7 +201,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   },
 
   tick: (deltaMs: number) => {
-    const { engine, currentLevel, unlockedLevels } = get()
+    const { engine, currentLevel, unlockedLevels, completedLevels } = get()
     if (!engine) return
 
     engine.tick(deltaMs)
@@ -177,11 +215,37 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
       suns: state.suns,
       currentWave: state.currentWave,
       gamePhase: state.phase,
+      zombiesKilledThisLevel: state.zombiesKilled,
+      sunCollectedThisLevel: state.sunCollected,
     }
 
     // Unlock next level on win
-    if (state.phase === GamePhase.won && currentLevel >= unlockedLevels) {
-      updates.unlockedLevels = currentLevel + 1
+    if (state.phase === GamePhase.won) {
+      const newUnlockedLevels = currentLevel >= unlockedLevels ? currentLevel + 1 : unlockedLevels
+      const newUnlockedPlants = getUnlockedPlants(newUnlockedLevels)
+
+      // Calculate stars: 1 for win, 2 if less than 3 plants lost, 3 if no plants lost
+      let stars = 1
+      if (state.plantsLost < 3) stars = 2
+      if (state.plantsLost === 0) stars = 3
+
+      const levelData: LevelCompletionData = {
+        stars,
+        zombiesKilled: state.zombiesKilled,
+        sunCollected: state.sunCollected,
+      }
+
+      const newCompletedLevels = { ...completedLevels, [currentLevel]: levelData }
+
+      updates.unlockedLevels = newUnlockedLevels
+      updates.unlockedPlants = newUnlockedPlants
+      updates.completedLevels = newCompletedLevels
+
+      saveProgress({
+        unlockedLevels: newUnlockedLevels,
+        completedLevels: newCompletedLevels,
+        unlockedPlants: newUnlockedPlants,
+      })
     }
 
     set(updates)
@@ -190,4 +254,25 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   goToMenu: () => set({ engine: null, gamePhase: GamePhase.menu }),
 
   goToLevelSelect: () => set({ engine: null, gamePhase: GamePhase.levelSelect }),
+
+  removePlant: (row: number, col: number) => {
+    const { engine } = get()
+    if (!engine) return
+
+    const state = engine.getState()
+    const plant = state.plants.find(p => p.row === row && p.col === col)
+    if (!plant) return
+
+    // Access engine internals to remove the plant - use plantAt pattern
+    // Since GameEngine doesn't expose removePlant, we need to work through the engine
+    // We'll filter the plant out via the engine's state by modifying the store state
+    // Actually, we need to add a method to GameEngine for this
+    engine.removePlant(plant.id)
+    const newState = engine.getState()
+    set({ plants: newState.plants })
+  },
+
+  setGameSpeed: (speed: number) => {
+    set({ gameSpeed: speed })
+  },
 }))

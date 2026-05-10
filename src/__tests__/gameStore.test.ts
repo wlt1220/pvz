@@ -4,6 +4,7 @@ import { PlantType, GamePhase } from '../game/types'
 
 describe('Game Store', () => {
   beforeEach(() => {
+    localStorage.clear()
     // Reset store to initial state
     useGameStore.setState({
       sun: 0,
@@ -18,6 +19,11 @@ describe('Game Store', () => {
       unlockedLevels: 1,
       engine: null,
       zombiePositions: [],
+      completedLevels: {},
+      unlockedPlants: [PlantType.sunflower, PlantType.peashooter],
+      gameSpeed: 1,
+      zombiesKilledThisLevel: 0,
+      sunCollectedThisLevel: 0,
     })
   })
 
@@ -188,5 +194,111 @@ describe('Game Store', () => {
 
     unregisterZombie('z1')
     expect(useGameStore.getState().zombiePositions).toHaveLength(0)
+  })
+
+  test('removePlant action removes a plant from the grid', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    // Plant a sunflower (cost 50, starting sun is 50)
+    const { selectPlant } = useGameStore.getState()
+    selectPlant(PlantType.sunflower)
+    const { plantSelected } = useGameStore.getState()
+    plantSelected(0, 0)
+
+    expect(useGameStore.getState().plants.length).toBe(1)
+
+    const { removePlant } = useGameStore.getState()
+    removePlant(0, 0)
+
+    expect(useGameStore.getState().plants.length).toBe(0)
+  })
+
+  test('removePlant does nothing for empty cell', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    const { removePlant } = useGameStore.getState()
+    removePlant(0, 0)
+
+    expect(useGameStore.getState().plants.length).toBe(0)
+  })
+
+  test('gameSpeed state changes', () => {
+    expect(useGameStore.getState().gameSpeed).toBe(1)
+
+    const { setGameSpeed } = useGameStore.getState()
+    setGameSpeed(2)
+    expect(useGameStore.getState().gameSpeed).toBe(2)
+
+    setGameSpeed(1)
+    expect(useGameStore.getState().gameSpeed).toBe(1)
+  })
+
+  test('zombiesKilled and sunCollected stats are tracked', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1) // Level 1 has zombies with delay 0
+
+    expect(useGameStore.getState().zombiesKilledThisLevel).toBe(0)
+    expect(useGameStore.getState().sunCollectedThisLevel).toBe(0)
+
+    // Collect a sun
+    const { tick } = useGameStore.getState()
+    tick(10000) // trigger sky sun
+
+    const stateAfterTick = useGameStore.getState()
+    if (stateAfterTick.suns.length > 0) {
+      const sunId = stateAfterTick.suns.find(s => !s.collected)?.id
+      if (sunId) {
+        const { collectSun } = useGameStore.getState()
+        collectSun(sunId)
+        expect(useGameStore.getState().sunCollectedThisLevel).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  test('completing a level saves progress to localStorage', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+
+    // Level 1 has:
+    // Wave 1: regular zombie in lane 2
+    // Wave 2: regular zombies in lanes 1 and 3
+    const engine = useGameStore.getState().engine!
+    engine.setSun(1000)
+
+    // Plant peashooters covering all lanes used by level 1
+    engine.plantAt(1, 0, PlantType.peashooter)
+    engine.plantAt(1, 1, PlantType.peashooter)
+    engine.plantAt(2, 0, PlantType.peashooter)
+    engine.plantAt(2, 1, PlantType.peashooter)
+    engine.plantAt(3, 0, PlantType.peashooter)
+    engine.plantAt(3, 1, PlantType.peashooter)
+
+    // Tick until the level is won
+    for (let i = 0; i < 700; i++) {
+      const { tick } = useGameStore.getState()
+      tick(100)
+      if (useGameStore.getState().gamePhase === GamePhase.won) break
+    }
+
+    expect(useGameStore.getState().gamePhase).toBe(GamePhase.won)
+    expect(useGameStore.getState().completedLevels[1]).toBeDefined()
+    expect(useGameStore.getState().completedLevels[1]!.stars).toBeGreaterThanOrEqual(1)
+
+    // Check localStorage was updated
+    const raw = localStorage.getItem('pvz-progress')
+    expect(raw).not.toBeNull()
+    const saved = JSON.parse(raw!)
+    expect(saved.unlockedLevels).toBe(2)
+  })
+
+  test('startLevel sets unlockedPlants for the level', () => {
+    const { startLevel } = useGameStore.getState()
+    startLevel(1)
+    const state = useGameStore.getState()
+    expect(state.unlockedPlants).toContain(PlantType.sunflower)
+    expect(state.unlockedPlants).toContain(PlantType.peashooter)
+    expect(state.unlockedPlants.length).toBe(2)
   })
 })

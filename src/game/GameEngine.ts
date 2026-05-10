@@ -37,6 +37,9 @@ export class GameEngine {
   private nextZombieId: number = 1;
   private nextProjectileId: number = 1;
   private nextSunId: number = 1;
+  private zombiesKilledCount: number = 0;
+  private plantsLostCount: number = 0;
+  private sunCollectedCount: number = 0;
 
   constructor(levelConfig: LevelConfig) {
     this.waveManager = new WaveManager(levelConfig.waves);
@@ -103,6 +106,7 @@ export class GameEngine {
       sun.collected = true;
       sun.collectedAt = this.elapsedMs;
       this.sun += sun.value;
+      this.sunCollectedCount += sun.value;
     }
   }
 
@@ -117,6 +121,9 @@ export class GameEngine {
       currentWave: this.waveManager.getCurrentWave(),
       totalWaves: this.waveManager.getTotalWaves(),
       elapsedMs: this.elapsedMs,
+      zombiesKilled: this.zombiesKilledCount,
+      plantsLost: this.plantsLostCount,
+      sunCollected: this.sunCollectedCount,
     };
   }
 
@@ -135,6 +142,11 @@ export class GameEngine {
   /** Set sun amount directly (useful for testing) */
   setSun(amount: number): void {
     this.sun = amount;
+  }
+
+  /** Remove a plant by id (shovel action) */
+  removePlant(plantId: string): void {
+    this.plants = this.plants.filter(p => p.id !== plantId);
   }
 
   // ---- Internal Methods ----
@@ -290,6 +302,7 @@ export class GameEngine {
           if (target.hp <= 0) {
             // Plant destroyed
             this.plants = this.plants.filter(p => p.id !== target.id);
+            this.plantsLostCount++;
             zombie.state = 'walking';
             zombie.eatingTarget = null;
           }
@@ -370,6 +383,7 @@ export class GameEngine {
     // Remove dead zombies
     this.zombies = this.zombies.filter(z => {
       if (z.state === 'dying') {
+        this.zombiesKilledCount++;
         return false;
       }
       return true;

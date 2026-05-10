@@ -2,7 +2,7 @@ import { ZombieType } from './types';
 import type { LevelConfig } from './types';
 
 export const LEVELS: LevelConfig[] = [
-  // Level 1: Introduction - just regular zombies
+  // Level 1: Tutorial - gentle introduction with regular zombies only
   {
     levelNumber: 1,
     waves: [
@@ -13,7 +13,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 2: More regulars
+  // Level 2: Building defenses - more regulars to practice economy
   {
     levelNumber: 2,
     waves: [
@@ -33,7 +33,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 3: Introduce coneheads
+  // Level 3: First challenge - introducing tougher coneheads
   {
     levelNumber: 3,
     waves: [
@@ -52,7 +52,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 4: Flag bearers (faster zombies)
+  // Level 4: Speed test - fast flag bearers lead the charge
   {
     levelNumber: 4,
     waves: [
@@ -74,7 +74,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 5: Introduce bucketheads
+  // Level 5: Heavy armor - bucketheads require sustained firepower
   {
     levelNumber: 5,
     waves: [
@@ -100,7 +100,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 6: Introduce pole vaulting
+  // Level 6: Leapers - pole vaulting zombies jump over front defenses
   {
     levelNumber: 6,
     waves: [
@@ -129,7 +129,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 7: Introduce newspaper zombie
+  // Level 7: Rage mode - newspaper zombies speed up when damaged
   {
     levelNumber: 7,
     waves: [
@@ -157,7 +157,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 8: Introduce football zombie
+  // Level 8: Blitz - football zombies rush your defenses
   {
     levelNumber: 8,
     waves: [
@@ -193,7 +193,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 9: Introduce gargantuar
+  // Level 9: Titan assault - gargantuars bring devastating power
   {
     levelNumber: 9,
     waves: [
@@ -231,7 +231,7 @@ export const LEVELS: LevelConfig[] = [
       ]},
     ],
   },
-  // Level 10: Final challenge - everything mixed
+  // Level 10: Boss fight - the ultimate zombie horde
   {
     levelNumber: 10,
     waves: [
