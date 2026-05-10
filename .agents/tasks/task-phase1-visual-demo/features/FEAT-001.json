@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-001",
+  "type": "chore",
+  "description": "Project scaffolding with Vite + React + Three.js + TypeScript + Vitest. Sets up the complete development environment and build pipeline.",
+  "status": "in_progress",
+  "steps": [
+    "Initialize a new Vite project with React and TypeScript template in /projects/sandbox/pvz (overwriting existing files as needed). Use: npm create vite@latest . -- --template react-ts",
+    "Install core dependencies: react, react-dom, three, @react-three/fiber, @react-three/drei, zustand",
+    "Install dev dependencies: @types/three, vitest, @testing-library/react, jsdom, @vitejs/plugin-react",
+    "Configure vite.config.ts with React plugin",
+    "Configure vitest.config.ts (or add test config in vite.config.ts) with jsdom environment",
+    "Configure tsconfig.json with strict mode, path aliases if helpful",
+    "Create src/main.tsx entry point rendering App component",
+    "Create src/App.tsx with a basic @react-three/fiber Canvas that renders a simple colored box as a smoke test",
+    "Add npm scripts: dev, build, test, preview",
+    "Run npm run build to verify the project compiles successfully",
+    "Run npm run test to verify vitest is configured (can be a trivial passing test in src/__tests__/setup.test.ts)"
+  ],
+  "acceptance_criteria": [
+    "npm run build completes without errors",
+    "npm run test runs and passes with at least one trivial test",
+    "npx tsc --noEmit passes with no TypeScript errors",
+    "The project structure has src/App.tsx with a Canvas component from @react-three/fiber"
+  ],
+  "verification": [
+    "npm run build",
+    "npm run test",
+    "npx tsc --noEmit"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
