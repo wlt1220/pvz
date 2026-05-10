@@ -4,6 +4,7 @@ import { LEVELS } from '../game/levels'
 import { loadProgress, saveProgress, getUnlockedPlants, PLANT_RECHARGE } from '../game/progression'
 import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity, LevelCompletionData } from '../game/types'
 import { PlantType, GamePhase } from '../game/types'
+import { audioManager } from '../audio/AudioManager'
 
 export const ROWS = 5
 export const COLS = 9
@@ -172,6 +173,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
 
     const success = engine.plantAt(row, col, selectedPlant)
     if (success) {
+      audioManager.play('plantPlace')
       const state = engine.getState()
       const rechargeTime = PLANT_RECHARGE[selectedPlant]
       const newCooldowns = { ...get().plantCooldowns }
@@ -193,6 +195,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
 
     engine.collectSun(sunId)
     const state = engine.getState()
+    audioManager.play('sunCollect')
     set({ sun: state.sun, suns: state.suns, sunCollectedThisLevel: state.sunCollected })
   },
 

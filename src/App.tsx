@@ -9,6 +9,7 @@ import PauseMenu from './components/ui/PauseMenu'
 import CountdownOverlay from './components/ui/CountdownOverlay'
 import { useGameLoop } from './store/useGameLoop'
 import { useGameStore } from './store/gameStore'
+import { useAudioTriggers } from './audio/useAudioTriggers'
 import { GamePhase } from './game/types'
 
 function GameCanvas() {
@@ -21,6 +22,7 @@ function GameCanvas() {
 
 function App() {
   useGameLoop()
+  useAudioTriggers()
   const gamePhase = useGameStore((s) => s.gamePhase)
   const showCountdown = useGameStore((s) => s.showCountdown)
 

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useGameStore } from '../../store/gameStore'
+import { audioManager } from '../../audio/AudioManager'
 import { buttonBase } from './styles'
 
 function HUD() {
@@ -10,6 +12,13 @@ function HUD() {
   const setGameSpeed = useGameStore((s) => s.setGameSpeed)
   const shovelMode = useGameStore((s) => s.shovelMode)
   const toggleShovel = useGameStore((s) => s.toggleShovel)
+
+  const [muted, setMuted] = useState(audioManager.isMuted())
+
+  const handleToggleMute = () => {
+    audioManager.toggleMute()
+    setMuted(audioManager.isMuted())
+  }
 
   return (
     <div
@@ -78,6 +87,23 @@ function HUD() {
 
       {/* Right: buttons */}
       <div style={{ display: 'flex', gap: '8px', pointerEvents: 'auto' }}>
+        {/* Mute button */}
+        <button
+          onClick={handleToggleMute}
+          style={{
+            ...buttonBase,
+            minHeight: '48px',
+            padding: '8px 12px',
+            background: 'rgba(0,0,0,0.6)',
+            color: '#fff',
+            border: '2px solid rgba(255,255,255,0.4)',
+            fontSize: 'clamp(18px, 3vw, 24px)',
+          }}
+          title={muted ? 'Unmute' : 'Mute'}
+        >
+          {muted ? '\uD83D\uDD07' : '\uD83D\uDD0A'}
+        </button>
+
         {/* Shovel button */}
         <button
           onClick={toggleShovel}
