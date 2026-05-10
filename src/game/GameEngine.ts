@@ -40,6 +40,7 @@ export class GameEngine {
   private zombiesKilledCount: number = 0;
   private plantsLostCount: number = 0;
   private sunCollectedCount: number = 0;
+  private maxCherryBombKills: number = 0;
 
   constructor(levelConfig: LevelConfig) {
     this.waveManager = new WaveManager(levelConfig.waves);
@@ -124,6 +125,7 @@ export class GameEngine {
       zombiesKilled: this.zombiesKilledCount,
       plantsLost: this.plantsLostCount,
       sunCollected: this.sunCollectedCount,
+      maxCherryBombKills: this.maxCherryBombKills,
     };
   }
 
@@ -471,6 +473,7 @@ export class GameEngine {
     const config = PLANT_CONFIGS[PlantType.cherrybomb];
     const range = config.special['aoeRange'] as number;
 
+    let killCount = 0;
     for (const zombie of this.zombies) {
       if (zombie.state === 'dying') continue;
       const rowDist = Math.abs(zombie.row - plant.row);
@@ -479,8 +482,13 @@ export class GameEngine {
         zombie.hp -= config.damage;
         if (zombie.hp <= 0) {
           zombie.state = 'dying';
+          killCount++;
         }
       }
+    }
+
+    if (killCount > this.maxCherryBombKills) {
+      this.maxCherryBombKills = killCount;
     }
 
     // Self-destruct

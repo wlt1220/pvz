@@ -145,6 +145,7 @@ export interface GameState {
   zombiesKilled: number;
   plantsLost: number;
   sunCollected: number;
+  maxCherryBombKills: number;
 }
 
 // ---- Level Meta / Progression ----

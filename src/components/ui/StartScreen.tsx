@@ -2,6 +2,7 @@ import { useGameStore } from '../../store/gameStore'
 
 function StartScreen() {
   const goToLevelSelect = useGameStore((s) => s.goToLevelSelect)
+  const goToAchievements = useGameStore((s) => s.goToAchievements)
 
   return (
     <div
@@ -94,6 +95,25 @@ function StartScreen() {
         }}
       >
         Play
+      </button>
+
+      {/* Achievements button */}
+      <button
+        onClick={goToAchievements}
+        style={{
+          marginTop: '16px',
+          padding: '14px 40px',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#fff',
+          background: 'rgba(255,255,255,0.2)',
+          border: '2px solid rgba(255,255,255,0.5)',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          minHeight: '48px',
+        }}
+      >
+        Achievements
       </button>
     </div>
   )

@@ -7,6 +7,8 @@ import LevelSelect from './components/ui/LevelSelect'
 import GameOverScreen from './components/ui/GameOverScreen'
 import PauseMenu from './components/ui/PauseMenu'
 import CountdownOverlay from './components/ui/CountdownOverlay'
+import AchievementPopup from './components/ui/AchievementPopup'
+import AchievementGallery from './components/ui/AchievementGallery'
 import { useGameLoop } from './store/useGameLoop'
 import { useGameStore } from './store/gameStore'
 import { useAudioTriggers } from './audio/useAudioTriggers'
@@ -25,6 +27,7 @@ function App() {
   useAudioTriggers()
   const gamePhase = useGameStore((s) => s.gamePhase)
   const showCountdown = useGameStore((s) => s.showCountdown)
+  const showAchievements = useGameStore((s) => s.showAchievements)
 
   const showCanvas =
     gamePhase === GamePhase.playing ||
@@ -36,7 +39,8 @@ function App() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       {showCanvas && <GameCanvas />}
 
-      {gamePhase === GamePhase.menu && <StartScreen />}
+      {gamePhase === GamePhase.menu && !showAchievements && <StartScreen />}
+      {gamePhase === GamePhase.menu && showAchievements && <AchievementGallery />}
       {gamePhase === GamePhase.levelSelect && <LevelSelect />}
 
       {(gamePhase === GamePhase.playing || gamePhase === GamePhase.paused) && (
@@ -53,6 +57,8 @@ function App() {
       {(gamePhase === GamePhase.won || gamePhase === GamePhase.lost) && (
         <GameOverScreen />
       )}
+
+      <AchievementPopup />
     </div>
   )
 }

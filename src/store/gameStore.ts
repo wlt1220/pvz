@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { GameEngine } from '../game/GameEngine'
 import { LEVELS } from '../game/levels'
 import { loadProgress, saveProgress, getUnlockedPlants, PLANT_RECHARGE } from '../game/progression'
+import { AchievementTracker } from '../game/achievementTracker'
+import type { AchievementStats, AchievementContext } from '../game/achievementTracker'
+import { AchievementId } from '../game/achievements'
 import type { PlantEntity, ZombieEntity, ProjectileEntity, SunEntity, LevelCompletionData } from '../game/types'
 import { PlantType, GamePhase } from '../game/types'
 import { audioManager } from '../audio/AudioManager'
@@ -61,6 +64,11 @@ interface GameStoreState {
   // Countdown
   showCountdown: boolean
 
+  // Achievements
+  showAchievements: boolean
+  recentAchievements: AchievementId[]
+  achievementStats: AchievementStats
+
   // Engine reference (not exposed to components directly)
   engine: GameEngine | null
 
@@ -74,6 +82,8 @@ interface GameStoreState {
   tick: (deltaMs: number) => void
   goToMenu: () => void
   goToLevelSelect: () => void
+  goToAchievements: () => void
+  dismissAchievement: (id: AchievementId) => void
   removePlant: (row: number, col: number) => void
   setGameSpeed: (speed: number) => void
   toggleShovel: () => void
@@ -97,6 +107,8 @@ function loadInitialProgress(): { unlockedLevels: number; completedLevels: Recor
 }
 
 const initialProgress = loadInitialProgress()
+
+const achievementTracker = new AchievementTracker()
 
 export const useGameStore = create<GameStoreState>()((set, get) => ({
   // Grid config
@@ -151,6 +163,11 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
   // Countdown
   showCountdown: false,
 
+  // Achievements
+  showAchievements: false,
+  recentAchievements: [],
+  achievementStats: achievementTracker.getStats(),
+
   // Engine
   engine: null,
 
@@ -174,6 +191,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
     const success = engine.plantAt(row, col, selectedPlant)
     if (success) {
       audioManager.play('plantPlace')
+      achievementTracker.incrementPlants(1)
       const state = engine.getState()
       const rechargeTime = PLANT_RECHARGE[selectedPlant]
       const newCooldowns = { ...get().plantCooldowns }
@@ -185,6 +203,7 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
         plants: state.plants,
         selectedPlant: null,
         plantCooldowns: newCooldowns,
+        achievementStats: achievementTracker.getStats(),
       })
     }
   },
@@ -308,14 +327,40 @@ export const useGameStore = create<GameStoreState>()((set, get) => ({
         completedLevels: newCompletedLevels,
         unlockedPlants: newUnlockedPlants,
       })
+
+      // Achievement tracking
+      achievementTracker.incrementKills(state.zombiesKilled)
+      const achievementContext: AchievementContext = {
+        zombiesKilledThisLevel: state.zombiesKilled,
+        sunCollectedThisLevel: state.sunCollected,
+        plantsLostThisLevel: state.plantsLost,
+        elapsedMs: state.elapsedMs,
+        stars,
+        currentLevel,
+        completedLevels: newCompletedLevels,
+        maxCherryBombKills: state.maxCherryBombKills,
+      }
+      const newAchievements = achievementTracker.checkOnLevelComplete(achievementContext)
+      if (newAchievements.length > 0) {
+        updates.recentAchievements = [...get().recentAchievements, ...newAchievements]
+      }
+      updates.achievementStats = achievementTracker.getStats()
     }
 
     set(updates)
   },
 
-  goToMenu: () => set({ engine: null, gamePhase: GamePhase.menu }),
+  goToMenu: () => set({ engine: null, gamePhase: GamePhase.menu, showAchievements: false }),
 
   goToLevelSelect: () => set({ engine: null, gamePhase: GamePhase.levelSelect }),
+
+  goToAchievements: () => set({ showAchievements: true }),
+
+  dismissAchievement: (id: AchievementId) => {
+    set((state) => ({
+      recentAchievements: state.recentAchievements.filter((a) => a !== id),
+    }))
+  },
 
   removePlant: (row: number, col: number) => {
     const { engine } = get()
