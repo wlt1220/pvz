@@ -1,14 +1,17 @@
 import { Sky, OrbitControls } from '@react-three/drei'
 import Lawn from './Lawn'
-import Sunflower from './plants/Sunflower'
-import Peashooter from './plants/Peashooter'
-import WallNut from './plants/WallNut'
-import RegularZombie from './zombies/RegularZombie'
-import ConeHeadZombie from './zombies/ConeHeadZombie'
 import SunParticles from './effects/SunParticles'
-import { gridToWorld, rowToZ } from '../utils/gridUtils'
+import SunCollector from './ui/SunCollector'
+import PlantRenderer from './plants/PlantRenderer'
+import ZombieRenderer from './zombies/ZombieRenderer'
+import ProjectileRenderer from './ProjectileRenderer'
+import { useGameStore } from '../store/gameStore'
 
 function Scene() {
+  const plants = useGameStore((s) => s.plants)
+  const zombies = useGameStore((s) => s.zombies)
+  const projectiles = useGameStore((s) => s.projectiles)
+
   return (
     <>
       {/* Lighting */}
@@ -42,20 +45,23 @@ function Scene() {
       {/* Game objects */}
       <Lawn />
 
-      {/* Plants on the lawn grid */}
-      <Sunflower position={gridToWorld(1, 1)} />
-      <Sunflower position={gridToWorld(2, 1)} />
-      <Sunflower position={gridToWorld(4, 1)} />
-      <Peashooter position={gridToWorld(1, 2)} />
-      <Peashooter position={gridToWorld(2, 2)} />
-      <Peashooter position={gridToWorld(3, 2)} />
-      <WallNut position={gridToWorld(3, 0)} />
+      {/* Plants from game state */}
+      {plants.map((plant) => (
+        <PlantRenderer key={plant.id} plant={plant} />
+      ))}
 
-      {/* Zombies approaching from the right */}
-      <RegularZombie position={[6, 0, rowToZ(0)]} speed={0.3} />
-      <RegularZombie position={[7, 0, rowToZ(2)]} speed={0.25} />
-      <ConeHeadZombie position={[7.5, 0, rowToZ(1)]} speed={0.2} />
-      <RegularZombie position={[5, 0, rowToZ(4)]} speed={0.35} />
+      {/* Zombies from game state */}
+      {zombies.map((zombie) => (
+        <ZombieRenderer key={zombie.id} zombie={zombie} />
+      ))}
+
+      {/* Projectiles from game state */}
+      {projectiles.map((projectile) => (
+        <ProjectileRenderer key={projectile.id} projectile={projectile} />
+      ))}
+
+      {/* Sun collector for clicking suns */}
+      <SunCollector />
 
       {/* Ambient sun particles */}
       <SunParticles />
